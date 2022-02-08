@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import time
 import netifaces
-from lcd_controls import show_lcd
+from hard_controls.lcd_controls import show_lcd
 
 def startup():
     ip_addres = None
