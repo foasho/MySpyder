@@ -53,9 +53,21 @@ sudo apt install libportaudio0 libportaudio2 libportaudiocpp0 portaudio19-dev
 
 ### OpenCVのインストール
 ```
-pip install opencv-python==4.1.0.25
-sudo apt-get install libatlas-base-dev
-sudo apt-get install libjasper-dev
+# ビルドツール関係(もしかしたらいらないかも)
+sudo apt-get install build-essential cmake pkg-config -y
+# 画像関係
+sudo apt-get install libjpeg-dev libtiff5-dev libjasper-dev libpng-dev -y
+# 動画関係
+sudo apt-get install libavcodec-dev libavformat-dev libswscale-dev libv4l-dev -y
+sudo apt-get install libxvidcore-dev libx264-dev -y
+# 最適化関係
+sudo apt-get install libatlas-base-dev gfortran -y
+# HDF5関係
+sudo apt-get install libhdf5-dev libhdf5-serial-dev libhdf5-103 -y
+# Qtライブラリ
+sudo apt-get install libqtgui4 libqtwebkit4 libqt4-test python3-pyqt5 -y
+
+pip3 install opencv-contrib-python==4.1.0.25
 ```
 
 ### TeamViewerのインストール
