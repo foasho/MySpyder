@@ -50,3 +50,12 @@ amixer -D hw:1 sset Mic 100%
 pip install pyaudio
 sudo apt install libportaudio0 libportaudio2 libportaudiocpp0 portaudio19-dev
 ```
+
+### OpenCVのインストール
+```
+pip install opencv-python==4.1.0.25
+sudo apt-get install libatlas-base-dev
+sudo apt-get install libjasper-dev
+```
+
+### TeamViewerのインストール

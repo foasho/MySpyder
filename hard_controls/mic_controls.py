@@ -4,6 +4,8 @@ import os
 from datetime import date, datetime
 import numpy as np
 import time
+import soundfile as sf
+from io import BytesIO
 
 """
 Settings
@@ -31,6 +33,7 @@ def mic_get_audio_stream(
     stream = audio.open(format = form_1,rate = samp_rate,channels = chans, \
                         input_device_index = dev_index,input = True, \
                         frames_per_buffer=chunk)
+    print(stream)
     print("recording")
     frames = []
 
@@ -72,17 +75,17 @@ def mic_get_audio_stream(
                     # 音声ファイルとして出力
                     if is_save:
                         now = datetime.now()
-                        filename = now.strftime("%Y%m%d%H%M%S") + ".wav"
                         output_dir = "./output/"
                         if not os.path.exists(output_dir):
                             os.makedirs(output_dir)
-                        wavefile = wave.open(output_dir+filename,'wb')
+                        wavefile = wave.open(output_dir+output_name,'wb')
                         wavefile.setnchannels(chans)
                         wavefile.setsampwidth(audio.get_sample_size(form_1))
                         wavefile.setframerate(samp_rate)
                         wavefile.writeframes(b''.join(frames))
                         wavefile.close()
                         print("Saved.")
+                    break
                 # time.sleep(0.01)
             except KeyboardInterrupt:
                 print("Ctrl+Cが押されました。")
@@ -94,6 +97,8 @@ def mic_get_audio_stream(
     stream.stop_stream()
     stream.close()
     audio.terminate()
+    audio_source = output_dir+output_name
+    return audio_source
 
 if __name__ == "__main__":
     print("start test mic")
