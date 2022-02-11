@@ -83,7 +83,7 @@ npm install
 ### リロード数の上限変更
 ```
 sudo nano /proc/sys/fs/inotify/max_user_watches
-8192 => 81920
+8192 => 17840
 ```
 
 ### オレオレ証明書の作成

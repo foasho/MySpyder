@@ -25,6 +25,17 @@ app = FastAPI(
 
 # _dir = os.getcwd().split("/")[-1]
 
+class SpyderManager:
+    def __init__(self):
+        self.front_servo1 = ""
+        self.recent_data = None
+
+    def set_recent_data(self, recent_data):
+        self.recent_data = recent_data
+    
+    def get_recent_data(self):
+        return self.recent_data
+
 
 class ConnectionManager:
     """Webソケットマネージャー"""
@@ -47,30 +58,39 @@ class ConnectionManager:
             await connection.send_text(message)
 
 conn_mgr = ConnectionManager()
+spyder = SpyderManager()
 
 @app.websocket("/ws/{client_id}")
 async def process_camera_ws(websocket: WebSocket, client_id: int):
     """ カメラデータの取得 と データの取得 """
-    print("start1")
+    print("## StartWebSocket")
     await conn_mgr.connect(websocket)
-    print("start2")
     try:
         while True:
             data_string = await websocket.receive_text()
-            print("## 取得データの確認 ##")
-            print(data_string)
+            if not spyder.get_recent_data() == data_string:
+                spyder.set_recent_data(data_string)
+                print("## 取得データの確認 ##")
+                print(data_string)
 
-            # Convert to PIL image
-            pil_image = camera_controls.get_capture()
-
-            result = {
-                "image_base64": camera_controls.convert_pil_to_base64(pil_image=pil_image) 
+            res = {
+                "image_base64": None,
             }
 
-            time.sleep(0.01)
+            # Convert to PIL image
+            try:
+                # 画像の取得
+                pil_image = camera_controls.get_capture()
+                res["image_base64"] = camera_controls.convert_pil_to_base64(pil_image=pil_image) 
+                
+            except Exception as e:
+                print(f"## ERROR = {str(e)}")
+                pass
+
+            time.sleep(0.001)
 
             # Send back the result
-            await conn_mgr.send_message(json.dumps(result), websocket)
+            await conn_mgr.send_message(json.dumps(res), websocket)
 
             # await conn_mgr.broadcast(f"Client #{client_id} says: {data}")
 

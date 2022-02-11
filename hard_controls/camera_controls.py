@@ -6,6 +6,9 @@ import cv2
 import numpy as np
 import base64
 
+camera = PiCamera()
+camera.resolution = (640, 480)
+
 class ImageType:
     Pillow = 0
     CV2 = 1
@@ -41,9 +44,10 @@ def convert_pil_to_base64(pil_image, is_front=True, format="jpeg"):
 
 def get_capture(ret_type = ImageType.Pillow):
     stream = BytesIO()
-    with PiCamera() as camera:
-        # camera.start_preview()
-        camera.capture(stream, format='jpeg')
+    # with PiCamera() as camera:
+    #     # camera.start_preview()
+    #     camera.capture(stream, format='jpeg')
+    camera.capture(stream, format='jpeg')
     stream.seek(0)
     image = Image.open(stream).convert("RGB")
     return image if ret_type == ImageType.Pillow else pil2cv(image)

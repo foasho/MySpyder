@@ -8,7 +8,7 @@ import { HomeComponent } from "./pages/Home";
 
 const App: React.FC = () => {
   return (
-    <div>
+    <div className={styles.appMain}>
       <div id="popup_modal"></div>
       <Router>
         <Switch>
