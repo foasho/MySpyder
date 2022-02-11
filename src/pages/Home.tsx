@@ -3,6 +3,7 @@ import { ArwesThemeProvider, StylesBaseline, Figure } from "@arwes/core";
 import { BleepSettings, BleepsProvider } from "@arwes/sounds";
 import { ButtonComponent } from "../components/Button";
 import styles from "../App.module.scss";
+import { Joystick } from "react-joystick-component";
 
 const ROOT_FONT_FAMILY = '"Titillium Web", sans-serif';
 const IMAGE_URL = '/assets/images/wallpaper.jpg';
@@ -19,37 +20,43 @@ const bleepsSettings = {
   type: { player: 'type' }
 };
 
-const joyOptions = {
-    mode: 'semi',
-    catchDistance: 150,
-    color: 'white'
-}
-
-
 export const HomeComponent: React.FC = () => {
-
+    
     const ws = useRef(null);
 
     const [state, setState] = React.useState({
         isPaused: false,
         captureImage: null,
+        stickSize: 150,
     });
 
     const sendWSCameraUpdate = () => {
         if (!ws.current) return;
-        ws.current.send("");
+        try {
+            ws.current.send("");
+        }
+        catch(e){}
     }
 
     React.useEffect(() => {
         // WebSocketの連結
         const client_id = Date.now();
-        const url = `${process.env.REACT_APP_APIURL}ws/${client_id}`.replace("https://", "wss://").replace("http://", "ws://");
-        ws.current = new WebSocket(url);
-        ws.current.onopen = () => console.log("ws opened");
-        ws.current.onclose = () => console.log("ws closed");
-        return () => {
-            ws.current.close();
-        };
+        try {
+            const url = `${process.env.REACT_APP_APIURL}ws/${client_id}`.replace("https://", "wss://").replace("http://", "ws://");
+            ws.current = new WebSocket(url);
+            ws.current.onopen = () => {
+                console.log("ws opened");
+            }
+            ws.current.onclose = () => {
+                console.log("ws closed");
+            };
+            return () => {
+                ws.current.close();
+            };
+        }
+        catch(e){
+            console.log("Error Close");
+        }
     }, []);
 
     React.useEffect(() => {
@@ -65,13 +72,34 @@ export const HomeComponent: React.FC = () => {
           })
         };
 
-        setInterval(sendWSCameraUpdate, 100);
+        setInterval(sendWSCameraUpdate, 1000);
 
-      }, [state]);
+    }, [state]);
 
     const sendWSMessage = (msg: string) => {
         if (!ws.current) return;
         ws.current.send(msg);
+    }
+
+    const leftStickMove = (event) => {
+        console.log(event);
+    }
+
+    const leftStickStop = (event) => {
+        console.log(event);
+    }
+
+    const rightStickMove = (event) => {
+        console.log(event);
+    }
+
+    const rightStickStop = (event) => {
+        console.log(event);
+    }
+
+    const getSize = () => {
+        const h = window.parent.screen.height;
+        return Number(h/5)
     }
 
     return (
@@ -85,7 +113,32 @@ export const HomeComponent: React.FC = () => {
                         bleepsSettings={bleepsSettings}
                     >
                         <div className={styles.controlTouchView}>
-                            {/* <ButtonComponent text={"test"} onClick={() => sendWSMessage("TEST")}></ButtonComponent> */}
+                            <div className={styles.messageTrig}>
+                                <ButtonComponent 
+                                    text={"Chat"} 
+                                    onClick={() => sendWSMessage("TEST")}
+                                ></ButtonComponent>
+                            </div>
+                            <div className={styles.joystickLeft}>
+                                <Joystick 
+                                    size={getSize()} 
+                                    sticky={false} 
+                                    baseColor="#ffffff22" 
+                                    stickColor="#000" 
+                                    move={leftStickMove} 
+                                    stop={leftStickStop}
+                                ></Joystick>
+                            </div>
+                            <div className={styles.joystickRight}>
+                                <Joystick 
+                                    size={state.stickSize} 
+                                    sticky={false} 
+                                    baseColor="#ffffff22" 
+                                    stickColor="#000" 
+                                    move={rightStickMove} 
+                                    stop={rightStickStop}
+                                ></Joystick>
+                            </div>
                         </div>
                         <div className={styles.cameraView}>
                             {state.captureImage &&

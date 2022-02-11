@@ -1,8 +1,7 @@
 import React from "react";
-import { ArwesThemeProvider, StylesBaseline, Figure, Text, Button } from "@arwes/core";
+import { ArwesThemeProvider, FrameLines, StylesBaseline, Figure, Text, Button } from "@arwes/core";
 import { BleepSettings, BleepsProvider } from "@arwes/sounds";
 import { AnimatorGeneralProvider } from "@arwes/animation";
-
 
 const FONT_FAMILY_ROOT = '"Titillium Web", sans-serif';
 const SOUND_ASSEMBLE_URL = '/assets/sounds/assemble.mp3';
@@ -23,41 +22,31 @@ const bleepsSettings = {
   click: { player: 'click' }
 };
 
-interface IButtonProps {
-    text: string;
-    onClick?: (args?: any) => void;
+interface IInputProps {
+    value: string;
+    onChange?: (args: any) => void; 
 }
 
-export const ButtonComponent: React.FC<IButtonProps> = (props) => {
-
-    const [state, setState] = React.useState({
-        activate: true
-    });
-
-    // React.useEffect(() => {
-    //     const timeout = setTimeout(() => setState({activate: !state.activate}), 2000);
-    //     return () => clearTimeout(timeout);
-    // }, [state.activate]);
+export const InputComponent: React.FC<IInputProps> = (props) => {
 
     return (
         <ArwesThemeProvider>
-            <StylesBaseline styles={globalStyles} />
             <BleepsProvider
                 audioSettings={audioSettings}
                 playersSettings={playersSettings}
                 bleepsSettings={bleepsSettings}
             >
+                <StylesBaseline />
                 <AnimatorGeneralProvider animator={animatorGeneral}>
-                <Button
-                    animator={{ activate: state.activate }}
-                    onClick={() => {
-                        if (props.onClick){
-                            props.onClick();
-                        }
-                    }}
-                >
-                    <Text>{props.text}</Text>
-                </Button>
+                    <FrameLines>
+                        <input type={"text"} onInput={
+                            (e: any) => {
+                                if (props.onChange){
+                                    props.onChange(e.target.value);
+                                }
+                            }
+                        }/>
+                    </FrameLines>
                 </AnimatorGeneralProvider>
             </BleepsProvider>
         </ArwesThemeProvider>
