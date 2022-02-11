@@ -5,3 +5,9 @@ output/*
 *__pycache__/
 node_modules
 dist
+.env
+server.csr
+server.crt
+server.key
+build
+build/*

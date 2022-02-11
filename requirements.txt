@@ -2,3 +2,6 @@ netifaces==0.11.0
 smbus2==0.4.1
 pyaudio==0.2.11
 SpeechRecognition==3.8.1
+fastapi==0.73.0
+python-dotenv==0.19.2
+uvicorn==0.17.4

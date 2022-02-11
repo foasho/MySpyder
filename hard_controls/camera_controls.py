@@ -4,6 +4,7 @@ from PIL import Image
 from io import BytesIO
 import cv2
 import numpy as np
+import base64
 
 class ImageType:
     Pillow = 0
@@ -30,6 +31,13 @@ def pil2cv(image):
     elif new_image.shape[2] == 4:  # 透過
         new_image = new_image[:, :, [2, 1, 0, 3]]
     return new_image
+
+def convert_pil_to_base64(pil_image, is_front: True, format="jpeg"):
+    buffer = BytesIO()
+    pil_image.save(buffer, format)
+    img_str = str(base64.b64encode(buffer.getvalue()).decode("ascii"))
+    return f"data:image/jpeg;base64,{img_str}" if is_front else img_str
+
 
 def get_capture(ret_type = ImageType.Pillow):
     stream = BytesIO()

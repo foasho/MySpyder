@@ -83,3 +83,14 @@ sudo apt install nodejs
 sudo nano /proc/sys/fs/inotify/max_user_watches
 8192 => 81920
 ```
+
+### オレオレ証明書の作成
+```
+sudo apt-get install openssl -y
+#秘密鍵の作成
+openssl genrsa 2048 > server.key
+openssl req -new -key server.key > server.csr
+>> すべてエンター
+openssl x509 -days 3650 -req -signkey server.key < server.csr > server.crt
+rm -f server.csr
+```

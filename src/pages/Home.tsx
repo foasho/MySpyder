@@ -1,4 +1,4 @@
-import React, { Fragment } from "react";
+import React, { Fragment, useRef } from "react";
 import { ArwesThemeProvider, StylesBaseline, Figure } from "@arwes/core";
 import { BleepSettings, BleepsProvider } from "@arwes/sounds";
 import { ButtonComponent } from "../components/Button";
@@ -20,6 +20,32 @@ const bleepsSettings = {
 
 
 export const HomeComponent: React.FC = () => {
+
+    const ws = useRef(null);
+
+    const [state, setState] = React.useState({
+        prediction: true
+    });
+
+    React.useEffect(() => {
+        // WebSocketの連結
+        const client_id = Date.now();
+        const url = `${process.env.REACT_APP_APIURL}/${client_id}`;
+        ws.current = new WebSocket(url);
+        ws.current.onopen = () => console.log("ws opened");
+        ws.current.onclose = () => console.log("ws closed");
+
+        // 0.25秒の間隔で
+
+        return () => {
+            ws.current.close();
+        };
+    }, [state]);
+
+    const sendWSData = (msg) => {
+        if (!ws.current) return;
+        ws.current.send(msg);
+    }
 
     return (
         <Fragment>
