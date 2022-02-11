@@ -24,27 +24,28 @@ export const HomeComponent: React.FC = () => {
     const ws = useRef(null);
 
     const [state, setState] = React.useState({
-        isPaused: true,
+        isPaused: false,
         captureImage: null,
     });
+
+    const sendWSCameraUpdate = () => {
+        if (!ws.current) return;
+        ws.current.send("");
+    }
 
     React.useEffect(() => {
         // WebSocketの連結
         const client_id = Date.now();
-        const url = `${process.env.REACT_APP_APIURL}/camera/${client_id}`;
+        const url = `${process.env.REACT_APP_APIURL}ws/${client_id}`.replace("https://", "wss://").replace("http://", "ws://");
         ws.current = new WebSocket(url);
         ws.current.onopen = () => console.log("ws opened");
         ws.current.onclose = () => console.log("ws closed");
-
-        return () => {
-            ws.current.close();
-        };
     }, []);
 
     React.useEffect(() => {
         if (!ws.current) return;
     
-        // サーバーから画像取得
+        // サーバーからデータ取得
         ws.current.onmessage = (event) => {
           if (state.isPaused) return;
           const message = JSON.parse(event.data);
@@ -54,9 +55,11 @@ export const HomeComponent: React.FC = () => {
           })
         };
 
+        setInterval(sendWSCameraUpdate, 200);
+
       }, [state]);
 
-    const sendWSData = (msg) => {
+    const sendWSMessage = (msg: string) => {
         if (!ws.current) return;
         ws.current.send(msg);
     }
@@ -72,16 +75,18 @@ export const HomeComponent: React.FC = () => {
                         bleepsSettings={bleepsSettings}
                     >
                         <div>
-                            <ButtonComponent text={"test"}></ButtonComponent>
+                            {/* <ButtonComponent text={"test"} onClick={() => sendWSMessage("TEST")}></ButtonComponent> */}
                         </div>
-                        <Figure
-                            src={state.captureImage}
-                            alt='A nebula'
-                            fluid
-                        >
-                        A nebula is an interstellar cloud of dust, hydrogen, helium and
-                        other ionized gases.
-                        </Figure>
+                        {state.captureImage &&
+                            <Figure
+                                src={state.captureImage}
+                                alt='Capture From Spyder'
+                                fluid
+                            >
+                            A nebula is an interstellar cloud of dust, hydrogen, helium and
+                            other ionized gases.
+                            </Figure>
+                        }
                     </BleepsProvider>
                 </ArwesThemeProvider>
             </div>

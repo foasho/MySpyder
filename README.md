@@ -23,6 +23,7 @@ sudo apt-get install -y libatlas-base-dev libjasper-dev
 
 ```
 sudo mkdir python3.7
+pip install uvicorn[standard]
 pip install -r requirements.txt
 ```
 
@@ -76,6 +77,7 @@ pip3 install opencv-contrib-python==4.1.0.25
 ```
 curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 sudo apt install nodejs
+npm install
 ```
 
 ### リロード数の上限変更
@@ -93,4 +95,9 @@ openssl req -new -key server.key > server.csr
 >> すべてエンター
 openssl x509 -days 3650 -req -signkey server.key < server.csr > server.crt
 rm -f server.csr
+```
+
+# 起動方法
+```
+npm run build
 ```

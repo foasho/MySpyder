@@ -25,6 +25,7 @@ const bleepsSettings = {
 
 interface IButtonProps {
     text: string;
+    onClick?: (args?: any) => void;
 }
 
 export const ButtonComponent: React.FC<IButtonProps> = (props) => {
@@ -49,7 +50,11 @@ export const ButtonComponent: React.FC<IButtonProps> = (props) => {
                 <AnimatorGeneralProvider animator={animatorGeneral}>
                 <Button
                     animator={{ activate: state.activate }}
-                    onClick={event => console.log(event)}
+                    onClick={() => {
+                        if (props.onClick){
+                            props.onClick();
+                        }
+                    }}
                 >
                     <Text>{props.text}</Text>
                 </Button>

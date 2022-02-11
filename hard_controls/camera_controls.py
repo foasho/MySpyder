@@ -32,7 +32,7 @@ def pil2cv(image):
         new_image = new_image[:, :, [2, 1, 0, 3]]
     return new_image
 
-def convert_pil_to_base64(pil_image, is_front: True, format="jpeg"):
+def convert_pil_to_base64(pil_image, is_front=True, format="jpeg"):
     buffer = BytesIO()
     pil_image.save(buffer, format)
     img_str = str(base64.b64encode(buffer.getvalue()).decode("ascii"))
@@ -42,7 +42,7 @@ def convert_pil_to_base64(pil_image, is_front: True, format="jpeg"):
 def get_capture(ret_type = ImageType.Pillow):
     stream = BytesIO()
     with PiCamera() as camera:
-        camera.start_preview()
+        # camera.start_preview()
         camera.capture(stream, format='jpeg')
     stream.seek(0)
     image = Image.open(stream).convert("RGB")
