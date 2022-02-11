@@ -3,3 +3,5 @@ MMDAgent_Example-1.7/*
 output/
 output/*
 *__pycache__/
+node_modules
+dist

@@ -40,12 +40,14 @@ def get_capture(ret_type = ImageType.Pillow):
     image = Image.open(stream).convert("RGB")
     return image if ret_type == ImageType.Pillow else pil2cv(image)
 
-def stream_camera():
+def stream_camera(size=(640, 480)):
     while True:
         try:
             image = get_capture(ImageType.CV2)
+            image = cv2.resize(image, dsize=size)
             cv2.imshow('Stream', image)
             if cv2.waitKey(1) & 0xFF == ord('q'):
+                print("quit")
                 break
             time.sleep(0.01)
         except KeyboardInterrupt:
@@ -55,5 +57,5 @@ def stream_camera():
 
 
 if __name__ == "__main__":
-    print("Test")
+    print("Test Monitor Camera Check")
     stream_camera()

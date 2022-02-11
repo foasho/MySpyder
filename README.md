@@ -71,3 +71,15 @@ pip3 install opencv-contrib-python==4.1.0.25
 ```
 
 ### TeamViewerのインストール
+
+### Nodejsのインストール
+```
+curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+sudo apt install nodejs
+```
+
+### リロード数の上限変更
+```
+sudo nano /proc/sys/fs/inotify/max_user_watches
+8192 => 81920
+```
