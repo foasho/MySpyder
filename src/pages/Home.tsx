@@ -24,23 +24,37 @@ export const HomeComponent: React.FC = () => {
     const ws = useRef(null);
 
     const [state, setState] = React.useState({
-        prediction: true
+        isPaused: true,
+        captureImage: null,
     });
 
     React.useEffect(() => {
         // WebSocketの連結
         const client_id = Date.now();
-        const url = `${process.env.REACT_APP_APIURL}/${client_id}`;
+        const url = `${process.env.REACT_APP_APIURL}/camera/${client_id}`;
         ws.current = new WebSocket(url);
         ws.current.onopen = () => console.log("ws opened");
         ws.current.onclose = () => console.log("ws closed");
 
-        // 0.25秒の間隔で
-
         return () => {
             ws.current.close();
         };
-    }, [state]);
+    }, []);
+
+    React.useEffect(() => {
+        if (!ws.current) return;
+    
+        // サーバーから画像取得
+        ws.current.onmessage = (event) => {
+          if (state.isPaused) return;
+          const message = JSON.parse(event.data);
+          setState({
+              ...state,
+              captureImage: message.image_base64
+          })
+        };
+
+      }, [state]);
 
     const sendWSData = (msg) => {
         if (!ws.current) return;
@@ -61,7 +75,7 @@ export const HomeComponent: React.FC = () => {
                             <ButtonComponent text={"test"}></ButtonComponent>
                         </div>
                         <Figure
-                            src={IMAGE_URL}
+                            src={state.captureImage}
                             alt='A nebula'
                             fluid
                         >
