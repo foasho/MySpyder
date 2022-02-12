@@ -1,9 +1,10 @@
+import sys
 import time
 from dotenv import load_dotenv
 import os
 import dotenv
-from hard_controls import camera_controls
-from soft_controls import get_ips
+from hard_controls import camera_controls, mic_controls, lcd_controls
+from soft_controls import get_ips, jtalk, speech_to_text
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
@@ -11,6 +12,9 @@ import uvicorn
 from typing import List
 import json
 import asyncio
+import requests
+from concurrent.futures import ThreadPoolExecutor
+
 
 app = FastAPI(
     title="Spyder"
@@ -26,6 +30,7 @@ app = FastAPI(
 # _dir = os.getcwd().split("/")[-1]
 
 class SpyderManager:
+    """ 本体のハード操作 """
     def __init__(self):
         self.front_servo1 = ""
         self.recent_data = None
@@ -36,6 +41,77 @@ class SpyderManager:
     def get_recent_data(self):
         return self.recent_data
 
+    def set_lcd_text(self, texts: tuple = ("Hello", "World")):
+        lcd_controls.lcd_string(texts[0], 1)
+        lcd_controls.lcd_string(texts[1], 2)
+
+    def clear_lcd(self):
+        lcd_controls.lcd_init()
+
+class SpeakRecognitionManager:
+    def __init__(self):
+        self.connectedNetwork = False
+        self.recognitions = []
+        self.new_recognitions = []
+        self.feature = None
+        self.end = False
+
+    # ネットワークへの接続を確認
+    def is_connect(self):
+        if not self.connectedNetwork:
+            r = requests.get("https://www.google.com", timeout=5)
+            self.connectedNetwork = True if r.status_code == 200 else False
+        return self.connectedNetwork
+
+    def start_recognitions(self):
+        while True:
+            try:
+                audio_source = mic_controls.mic_get_audio_stream(
+                    record_type=mic_controls.RecordType.WhileThreads, 
+                    record_secs=5, 
+                    record_thread=0.01, 
+                    is_save=True, 
+                    output_name="recognision.wav"
+                )
+                if self.end:
+                    break
+                text = speech_to_text.speech_to_text(audio_source)
+                if text and len(text) > 0:
+                    print("## 音声認証結果")
+                    print(text)
+                    self.set_recognitions(text)
+                time.sleep(1)
+            except Exception as e:
+                print(str(e))
+
+    def get_recognitions(self):
+        return self.recognitions
+
+    def set_recognitions(self, text):
+        self.recognitions.append(text)
+        self.new_recognitions.append(text)
+
+    def get_new_recognitions(self):
+        return self.new_recognitions
+
+    def delete_new_recognitions(self, text):
+        self.new_recognitions = [nr for nr in self.new_recognitions if nr != text]
+        return self.new_recognitions
+
+    def start_feature(self, executor):
+        feature = executor.submit(
+            speak_reg.start_recognitions
+        )
+        self.set_feature(feature)
+
+    def set_feature(self, feature):
+        self.feature = feature
+
+    def close_feature(self):
+        print("Close SpeakRecognition")
+        if self.feature:
+            self.feature.cancel()
+        self.end = True
 
 class ConnectionManager:
     """Webソケットマネージャー"""
@@ -59,32 +135,49 @@ class ConnectionManager:
 
 conn_mgr = ConnectionManager()
 spyder = SpyderManager()
+speak_reg = SpeakRecognitionManager()
 
 @app.websocket("/ws/{client_id}")
-async def process_camera_ws(websocket: WebSocket, client_id: int):
+async def process_ws(websocket: WebSocket, client_id: int):
     """ カメラデータの取得 と データの取得 """
     print("## StartWebSocket")
     await conn_mgr.connect(websocket)
     try:
         while True:
             data_string = await websocket.receive_text()
+            data = json.loads(data_string)
             if not spyder.get_recent_data() == data_string:
                 spyder.set_recent_data(data_string)
-                print("## 取得データの確認 ##")
-                print(data_string)
+            else:
+                continue
 
             res = {
                 "image_base64": None,
             }
 
-            # Convert to PIL image
             try:
-                # 画像の取得
-                pil_image = camera_controls.get_capture()
-                res["image_base64"] = camera_controls.convert_pil_to_base64(pil_image=pil_image) 
-                
+                actions = data["actions"]
+                if not len(actions) >= 1:
+                    continue
+
+                print(data)
+
+                for action in actions:  
+                    # Convert to PIL image
+                    if action == "frame":
+                        # 画像の取得
+                        pil_image = camera_controls.get_capture()
+                        res["image_base64"] = camera_controls.convert_pil_to_base64(pil_image=pil_image) 
+                    
+                    if action == "message":
+                        # 読み上げ
+                        if data["message"] and len(data["message"]) > 0:
+                            jtalk.start_jtalk(data["message"])
+                        
             except Exception as e:
                 print(f"## ERROR = {str(e)}")
+                import traceback
+                traceback.print_exc()
                 pass
 
             time.sleep(0.001)
@@ -107,9 +200,19 @@ app.mount(
     name="html"
 )
 
+# マルチプロセッサの設定数
+executor = ThreadPoolExecutor(max_workers=3)
+
+# マルチスレッドで音声認識をOnにする
+if speak_reg.is_connect():
+    speak_reg.start_feature(executor)
+
+# マルチスレッドでLCDモニタをセットアップする
+
+
+
 
 if __name__ == "__main__":
-    import sys
     port = 8000
     if len(sys.argv) > 1:
         ## 初期設定
@@ -148,3 +251,7 @@ if __name__ == "__main__":
         print("### Hosting ###")
         print(f"http://{value}:{port}/")
         uvicorn.run(app=app)
+
+print("SYSTEM END")
+speak_reg.close_feature()
+executor.shutdown(wait=False)

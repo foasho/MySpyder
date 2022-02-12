@@ -1,7 +1,9 @@
 import React from "react";
+import * as ReactDOM from "react-dom";
 import { ArwesThemeProvider, FrameLines, StylesBaseline, Figure, Text, Button } from "@arwes/core";
 import { BleepSettings, BleepsProvider } from "@arwes/sounds";
 import { AnimatorGeneralProvider } from "@arwes/animation";
+import { resolve } from "path/posix";
 
 const FONT_FAMILY_ROOT = '"Titillium Web", sans-serif';
 const SOUND_ASSEMBLE_URL = '/assets/sounds/assemble.mp3';
@@ -24,31 +26,39 @@ const bleepsSettings = {
 
 interface IInputProps {
     value: string;
+    width?: string;
     onChange?: (args: any) => void; 
 }
 
 export const InputComponent: React.FC<IInputProps> = (props) => {
 
     return (
-        <ArwesThemeProvider>
-            <BleepsProvider
-                audioSettings={audioSettings}
-                playersSettings={playersSettings}
-                bleepsSettings={bleepsSettings}
-            >
-                <StylesBaseline />
-                <AnimatorGeneralProvider animator={animatorGeneral}>
-                    <FrameLines>
-                        <input type={"text"} onInput={
-                            (e: any) => {
-                                if (props.onChange){
-                                    props.onChange(e.target.value);
+        <div>
+            <ArwesThemeProvider>
+                <BleepsProvider
+                    audioSettings={audioSettings}
+                    playersSettings={playersSettings}
+                    bleepsSettings={bleepsSettings}
+                >
+                    <StylesBaseline />
+                    <AnimatorGeneralProvider animator={animatorGeneral}>
+                        <FrameLines>
+                            <input 
+                                style={{width: props.width? props.width: "auto"}} 
+                                type={"text"} 
+                                onInput={
+                                (e: any) => {
+                                    if (props.onChange){
+                                        props.onChange(e.target.value);
+                                    }
                                 }
-                            }
-                        }/>
-                    </FrameLines>
-                </AnimatorGeneralProvider>
-            </BleepsProvider>
-        </ArwesThemeProvider>
+                                }
+                                value={props.value}
+                            />
+                        </FrameLines>
+                    </AnimatorGeneralProvider>
+                </BleepsProvider>
+            </ArwesThemeProvider>
+        </div>
     )
 }

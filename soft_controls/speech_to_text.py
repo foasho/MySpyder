@@ -8,13 +8,13 @@ r = sr.Recognizer()
 mic = sr.Microphone()
 
 def speech_to_text(audio_source, is_finish_delete=True):
-    print("## Start Recognition")
+    # print("## Start Recognition")
     text = ""
     try:
         with sr.AudioFile(audio_source) as src:
             audio = r.record(src)
             text = r.recognize_google(audio, language='ja-JP')
-        print(f"## SpeechRecognition Result = '{text}'")
+        # print(f"## SpeechRecognition Result = '{text}'")
         if is_finish_delete:
             os.remove(audio_source)
     # 以下は認識できなかったときに止まらないように。
@@ -22,6 +22,8 @@ def speech_to_text(audio_source, is_finish_delete=True):
         print("## Error [could not understand audio]")
     except sr.RequestError as e:
         print("## Error [Could not request results from Google Speech Recognition service; {0}]".format(e))
+    except:
+        print("## Error [Other Error]")
     return text
 
 if __name__ == "__main__":

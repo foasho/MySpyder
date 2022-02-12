@@ -4,6 +4,8 @@ import { BleepSettings, BleepsProvider } from "@arwes/sounds";
 import { ButtonComponent } from "../components/Button";
 import styles from "../App.module.scss";
 import { Joystick } from "react-joystick-component";
+import { InputComponent } from "../components/Input";
+import { Row, Col } from 'antd';
 
 const ROOT_FONT_FAMILY = '"Titillium Web", sans-serif';
 const IMAGE_URL = '/assets/images/wallpaper.jpg';
@@ -25,15 +27,19 @@ export const HomeComponent: React.FC = () => {
     const ws = useRef(null);
 
     const [state, setState] = React.useState({
+        frameCount: 0,
         isPaused: false,
         captureImage: null,
         stickSize: 150,
+        isMessageInput: false,
+        messageText: "",
     });
 
     const sendWSCameraUpdate = () => {
         if (!ws.current) return;
         try {
-            ws.current.send("");
+            ws.current.send(JSON.stringify({"actions": [`frame`], "frame": state.frameCount}));
+            setState({...state, frameCount: state.frameCount + 1});
         }
         catch(e){}
     }
@@ -64,21 +70,35 @@ export const HomeComponent: React.FC = () => {
     
         // サーバーからデータ取得
         ws.current.onmessage = (event) => {
-          if (state.isPaused) return;
-          const message = JSON.parse(event.data);
-          setState({
-              ...state,
-              captureImage: message.image_base64
-          })
+          if (event && event.data){
+              const data = JSON.parse(event.data);
+              let update_state = {};
+              if (data.image_base64){
+                  update_state["captureImage"] = data["image_base64"]
+              }
+              setState({
+                  ...state,
+                  ...update_state
+              });
+          }
         };
 
-        setInterval(sendWSCameraUpdate, 1000);
+        const intervalId = setInterval(() => {
+            sendWSCameraUpdate()
+        }, 250);
+        return () => {
+            clearInterval(intervalId);
+        };
 
     }, [state]);
 
-    const sendWSMessage = (msg: string) => {
+    const sendWSData = () => {
         if (!ws.current) return;
-        ws.current.send(msg);
+        const data = {
+            actions: ["message"],
+            message: state.messageText
+        }
+        ws.current.send(JSON.stringify(data));
     }
 
     const leftStickMove = (event) => {
@@ -102,6 +122,11 @@ export const HomeComponent: React.FC = () => {
         return Number(h/5)
     }
 
+    const sendMessage = () => {
+        sendWSData();
+        setState({...state, messageText: ""})
+    }
+
     return (
         <Fragment>
             <div className={styles.home}>
@@ -113,10 +138,50 @@ export const HomeComponent: React.FC = () => {
                         bleepsSettings={bleepsSettings}
                     >
                         <div className={styles.controlTouchView}>
+                            {state.isMessageInput &&
+                                <div className={styles.messageInput}>
+
+                                    <>
+                                        <Row>
+                                            <Col span={24}>
+                                                <InputComponent 
+                                                    value={state.messageText}
+                                                    onChange={(text: string) => {
+                                                        setState({...state, messageText: text});
+                                                    }}
+                                                ></InputComponent>
+                                            </Col>
+                                        </Row>
+                                        <Row style={{textAlign: "center"}}>
+                                            <span>
+                                                <ButtonComponent 
+                                                    text={"CANCEL"} 
+                                                    type="frame"
+                                                    onClick={() => {
+                                                        setState({...state, isMessageInput: false, messageText: "" })
+                                                    }}
+                                                ></ButtonComponent>
+                                            </span>
+                                            <span>
+                                                <ButtonComponent 
+                                                    text={"Message SEND "} 
+                                                    type="frame"
+                                                    onClick={() => {
+                                                        sendMessage()
+                                                    }}
+                                                ></ButtonComponent>
+                                            </span>
+                                        </Row>
+                                    </>
+                                
+                                </div>
+
+                            }
                             <div className={styles.messageTrig}>
                                 <ButtonComponent 
+                                    type="basic"
                                     text={"Chat"} 
-                                    onClick={() => sendWSMessage("TEST")}
+                                    onClick={() => setState({...state, isMessageInput: !state.isMessageInput})}
                                 ></ButtonComponent>
                             </div>
                             <div className={styles.joystickLeft}>
@@ -124,17 +189,17 @@ export const HomeComponent: React.FC = () => {
                                     size={getSize()} 
                                     sticky={false} 
                                     baseColor="#ffffff22" 
-                                    stickColor="#000" 
+                                    stickColor="rgb(0 240 255)" 
                                     move={leftStickMove} 
                                     stop={leftStickStop}
                                 ></Joystick>
                             </div>
                             <div className={styles.joystickRight}>
                                 <Joystick 
-                                    size={state.stickSize} 
+                                    size={getSize()} 
                                     sticky={false} 
                                     baseColor="#ffffff22" 
-                                    stickColor="#000" 
+                                    stickColor="rgb(0 240 255)" 
                                     move={rightStickMove} 
                                     stop={rightStickStop}
                                 ></Joystick>

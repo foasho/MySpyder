@@ -20,8 +20,6 @@ chunk = 4096 # 2^12 一度に取得するデータ数
 dev_index = 2 # デバイス番号
 wav_output_filename = 'test.wav' # 出力するファイル
 
-audio = pyaudio.PyAudio() # create pyaudio instantiation
-
 def mic_get_audio_stream(
     record_type=RecordType.Seconds, 
     record_secs=3,
@@ -29,12 +27,11 @@ def mic_get_audio_stream(
     is_save=False, 
     output_name=wav_output_filename
 ):
+    audio = pyaudio.PyAudio() # create pyaudio instantiation
     # create pyaudio stream
     stream = audio.open(format = form_1,rate = samp_rate,channels = chans, \
                         input_device_index = dev_index,input = True, \
                         frames_per_buffer=chunk)
-    print(stream)
-    print("recording")
     frames = []
 
     # loop through stream and append audio chunks to frame array
@@ -61,12 +58,14 @@ def mic_get_audio_stream(
                 data = stream.read(chunk,exception_on_overflow = False)
                 # ndarrayに変換
                 x = np.frombuffer(data, dtype="int16") / 32768.0
-                print(x.max())
+                # print(x.max())
 
                 # 閾値以上の場合はファイルに保存
                 if x.max() > threshold:
+                    print("## Start Record")
                     # 2秒間の音データを取込
                     frames = []
+                    frames.append(data)
                     # all.append(data)
                     for i in range(0,int((samp_rate/chunk)*record_secs)):
                         data = stream.read(chunk,exception_on_overflow = False)
@@ -84,7 +83,7 @@ def mic_get_audio_stream(
                         wavefile.setframerate(samp_rate)
                         wavefile.writeframes(b''.join(frames))
                         wavefile.close()
-                        print("Saved.")
+                        # print("Saved.")
                     break
                 # time.sleep(0.01)
             except KeyboardInterrupt:

@@ -1,5 +1,5 @@
 import React from "react";
-import { ArwesThemeProvider, StylesBaseline, Figure, Text, Button } from "@arwes/core";
+import { ArwesThemeProvider, StylesBaseline, Figure, Text, Button, FrameCorners } from "@arwes/core";
 import { BleepSettings, BleepsProvider } from "@arwes/sounds";
 import { AnimatorGeneralProvider } from "@arwes/animation";
 
@@ -25,6 +25,8 @@ const bleepsSettings = {
 
 interface IButtonProps {
     text: string;
+    type: "basic"| "frame";
+    width?: string;
     onClick?: (args?: any) => void;
 }
 
@@ -48,16 +50,31 @@ export const ButtonComponent: React.FC<IButtonProps> = (props) => {
                 bleepsSettings={bleepsSettings}
             >
                 <AnimatorGeneralProvider animator={animatorGeneral}>
-                <Button
-                    animator={{ activate: state.activate }}
-                    onClick={() => {
-                        if (props.onClick){
-                            props.onClick();
-                        }
-                    }}
-                >
-                    <Text>{props.text}</Text>
-                </Button>
+                    {props.type == "basic" &&
+                        <Button
+                            animator={{ activate: state.activate }}
+                            onClick={() => {
+                                if (props.onClick){
+                                    props.onClick();
+                                }
+                            }}
+                        >
+                            <Text style={{width: props.width? props.width: "auto"}}>{props.text}</Text>
+                        </Button>
+                    }
+                    {props.type == "frame" &&
+                        <Button
+                            FrameComponent={FrameCorners}
+                            animator={{ activate: state.activate }}
+                            onClick={() => {
+                                if (props.onClick){
+                                    props.onClick();
+                                }
+                            }}
+                        >
+                            <Text style={{width: props.width? props.width: "auto"}}>{props.text}</Text>
+                        </Button>
+                    }
                 </AnimatorGeneralProvider>
             </BleepsProvider>
         </ArwesThemeProvider>
