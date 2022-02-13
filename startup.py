@@ -1,30 +1,54 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+
+## [ GPIOのテスト ]
+# import RPi.GPIO as GPIO
+# import time
+
+# test_input_pin = 6
+# GPIO.setmode(GPIO.BCM)
+# GPIO.setup(test_input_pin, GPIO.IN)
+
+# while True:
+#     try:
+#         print(GPIO.input(test_input_pin))
+#         time.sleep(1)
+#     except KeyboardInterrupt:
+#         print("Break")
+#         break
+
+# GPIO.cleanup()
+
+## [ Servoのテスト ]
+from hard_controls.servo_controls import Servo
 import time
-import netifaces
-from hard_controls.lcd_controls import show_lcd
 
-def startup():
-    ip_addres = None
-    interface_data = netifaces.ifaddresses('eth0')
-    for key, val in interface_data.items():
-        for v in val:
-            addr = v["addr"]
-            if "." in addr and "192" in addr and ip_addres == None:
-                ip_addres = addr
-    interface_data2 = netifaces.ifaddresses('wlan0')
-    for key, val in interface_data2.items():
-        for v in val:
-            addr = v["addr"]
-            if "." in addr and "192" in addr and ip_addres == None:
-                ip_addres = addr
-    print(f"取得したIPアドレス＝{ip_addres}")
-    show_lcd("[IP ADDRESS]", ip_addres)
-    print("Waiting1")
-    time.sleep(3)
-    print("Waiting2")
-    time.sleep(3)
-    print("Completed.")
-
-if __name__ == "__main__":
-    startup()
+servo=Servo()
+def test_Servo():
+    try:
+        
+        for i in range(50):
+            servo.setServoAngle(15,90+i)
+            servo.setServoAngle(12,90+i)
+            servo.setServoAngle(9,90+i)
+            servo.setServoAngle(16,90+i)
+            servo.setServoAngle(19,90+i)
+            servo.setServoAngle(22,90+i)
+            time.sleep(0.005)
+        for i in range(60):
+            servo.setServoAngle(14,90+i)
+            servo.setServoAngle(11,90+i)
+            servo.setServoAngle(8,90+i)
+            servo.setServoAngle(17,90-i)
+            servo.setServoAngle(20,90-i)
+            servo.setServoAngle(23,90-i)
+            time.sleep(0.005)
+        for i in range(120):
+            servo.setServoAngle(13,i)
+            servo.setServoAngle(10,i)
+            servo.setServoAngle(31,i)
+            servo.setServoAngle(18,180-i)
+            servo.setServoAngle(21,180-i)
+            servo.setServoAngle(27,180-i)
+            time.sleep(0.005)
+        print ("\nEnd of program")      
+    except KeyboardInterrupt:
+        print ("\nEnd of program")

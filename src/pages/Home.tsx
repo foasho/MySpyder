@@ -1,11 +1,13 @@
 import React, { Fragment, useRef } from "react";
-import { ArwesThemeProvider, StylesBaseline, Figure } from "@arwes/core";
+import { ArwesThemeProvider, StylesBaseline, Figure, FrameBox, Text } from "@arwes/core";
+import { AnimatorGeneralProvider } from "@arwes/animation";
 import { BleepSettings, BleepsProvider } from "@arwes/sounds";
 import { ButtonComponent } from "../components/Button";
 import styles from "../App.module.scss";
 import { Joystick } from "react-joystick-component";
 import { InputComponent } from "../components/Input";
 import { Row, Col } from 'antd';
+import { DownOutlined, UpOutlined } from "@ant-design/icons";
 
 const ROOT_FONT_FAMILY = '"Titillium Web", sans-serif';
 const IMAGE_URL = '/assets/images/wallpaper.jpg';
@@ -22,6 +24,11 @@ const bleepsSettings = {
   type: { player: 'type' }
 };
 
+interface IMessage {
+    user: "Customer"| "Spyder" | "Administrator";
+    message: string;
+}
+
 export const HomeComponent: React.FC = () => {
     
     const ws = useRef(null);
@@ -33,6 +40,8 @@ export const HomeComponent: React.FC = () => {
         stickSize: 150,
         isMessageInput: false,
         messageText: "",
+        messages: [],
+        messageHistoryView: true
     });
 
     const sendWSCameraUpdate = () => {
@@ -175,7 +184,6 @@ export const HomeComponent: React.FC = () => {
                                     </>
                                 
                                 </div>
-
                             }
                             <div className={styles.messageTrig}>
                                 <ButtonComponent 
@@ -183,6 +191,36 @@ export const HomeComponent: React.FC = () => {
                                     text={"Chat"} 
                                     onClick={() => setState({...state, isMessageInput: !state.isMessageInput})}
                                 ></ButtonComponent>
+                            </div>
+                            <div className={styles.messageHistory}>
+                                <AnimatorGeneralProvider animator={{ duration: { enter: 200, exit: 200 }}}>                                
+                                    <FrameBox>
+                                        <div className={styles.content}>
+                                            [ Messages ]   
+                                            <span>
+                                                <DownOutlined />
+                                            </span> 
+                                        </div>
+                                        {state.messageHistoryView && 
+                                            <div>
+                                                {state.messages.map(mes => {
+                                                    return (
+                                                        <>
+                                                            {`${mes.user}>> ${mes.message}`}
+                                                        </>
+                                                    )
+                                                })}
+                                            </div>
+                                        }
+                                    </FrameBox>
+                                </AnimatorGeneralProvider>
+                            </div>
+                            <div className={styles.functionalBtn}>
+                                <Row>
+                                    <Col></Col>
+                                    <Col></Col>
+                                    <Col></Col>
+                                </Row>
                             </div>
                             <div className={styles.joystickLeft}>
                                 <Joystick 

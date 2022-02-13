@@ -14,7 +14,7 @@ import json
 import asyncio
 import requests
 from concurrent.futures import ThreadPoolExecutor
-
+import RPi.GPIO as GPIO # RPi.GPIOモジュールを使用
 
 app = FastAPI(
     title="Spyder"
@@ -29,14 +29,78 @@ app = FastAPI(
 
 # _dir = os.getcwd().split("/")[-1]
 
+class ESpyderStatus:
+    safety = 0
+    activate = 1
+
 class SpyderManager:
     """ 本体のハード操作 """
     def __init__(self):
+        self.mode = ESpyderStatus.safety # 0:safety or 1:acticate
         self.front_servo1 = ""
         self.recent_data = None
+        # GPIO操作で扱うデータ
+        self.key_switch = 5
+        self.button_switch = 6
+        self.feature = None
+        self.end = False
+
+    def set_gpio(self):
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(self.key_switch, GPIO.IN)
+        GPIO.setup(self.button_switch, GPIO.IN)
+
+    def get_gpio(self, pin_number):
+        return GPIO.input(pin_number)
+
+    def clear_gpio(self):
+        self.end = True
+        time.sleep(0.5)
+        GPIO.cleanup()
+    
+    def start_gpio(self):
+        while True:
+            try:
+                time.sleep(1)
+                if self.end:
+                    print("GPIO Close")
+                    self.close_gpio()
+                    break
+                print(self.get_gpio(self.key_switch))
+                if self.get_gpio(self.key_switch) and self.mode==ESpyderStatus.safety:
+                    self.mode = ESpyderStatus.activate
+                    jtalk.start_jtalk("システムアクティベート")
+                    jtalk.start_jtalk("すべての利用権限を付与します。")
+                
+                if self.get_gpio(self.key_switch) == 0 and self.mode==ESpyderStatus.activate:
+                    self.mode = ESpyderStatus.safety
+                    jtalk.start_jtalk("システムセーフティモード")
+                    jtalk.start_jtalk("一部の操作のみを許可します。")
+                
+                if self.get_gpio(self.button_switch) and self.mode == ESpyderStatus.activate:
+                    self.clear_lcd()
+                    ip = get_ips.get_ip()
+                    self.set_lcd_text(("IPADDRESS", ip))
+            except Exception as e:
+                print(str(e))
+
+    def start_feature(self, executor):
+        feature = executor.submit(
+            self.start_gpio
+        )
+        self.set_gpio_feature(feature)
+
+    def set_gpio_feature(self, feature):
+        self.feature = feature
+
+    def close_gpio(self):
+        if self.feature:
+            self.feature.cancel()
+        self.end = True
 
     def set_recent_data(self, recent_data):
         self.recent_data = recent_data
+        self.end = True
     
     def get_recent_data(self):
         return self.recent_data
@@ -48,7 +112,9 @@ class SpyderManager:
     def clear_lcd(self):
         lcd_controls.lcd_init()
 
+
 class SpeakRecognitionManager:
+    """ 音声認識マネージャー """
     def __init__(self):
         self.connectedNetwork = False
         self.recognitions = []
@@ -100,7 +166,7 @@ class SpeakRecognitionManager:
 
     def start_feature(self, executor):
         feature = executor.submit(
-            speak_reg.start_recognitions
+            self.start_recognitions
         )
         self.set_feature(feature)
 
@@ -135,6 +201,7 @@ class ConnectionManager:
 
 conn_mgr = ConnectionManager()
 spyder = SpyderManager()
+spyder.set_gpio()
 speak_reg = SpeakRecognitionManager()
 
 @app.websocket("/ws/{client_id}")
@@ -207,7 +274,8 @@ executor = ThreadPoolExecutor(max_workers=3)
 if speak_reg.is_connect():
     speak_reg.start_feature(executor)
 
-# マルチスレッドでLCDモニタをセットアップする
+# マルチスレッドSpyderを接続する
+spyder.start_feature(executor)
 
 
 
@@ -254,4 +322,5 @@ if __name__ == "__main__":
 
 print("SYSTEM END")
 speak_reg.close_feature()
+spyder.close_gpio()
 executor.shutdown(wait=False)

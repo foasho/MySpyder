@@ -30,6 +30,19 @@
             transform: translate(-50%, -50%);
 
         }
+        .messageHistory {
+            position: absolute;
+            right: 0;
+            bottom: 20vw;
+            width: 20vw;
+            height: 50vw;
+            .content {
+                width: 20vw;
+            }
+        }
+        .functionalBtn {
+            width: auto;
+        }
         .messageTrig {
             position: absolute;
             right: 3%;
