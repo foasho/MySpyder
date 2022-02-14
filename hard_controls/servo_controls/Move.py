@@ -539,12 +539,4 @@ class Control:
                   
                              
 if __name__=='__main__':
-    control = Control()
-    while True:
-        try:
-            cmd = input()
-            if cmd == "test":
-                test_move = ['CMD_MOVE', '1', '0', '25', '10', '0']
-                control.run(test_move)
-        except KeyboardInterrupt:
-            print("Quit")
+    pass
