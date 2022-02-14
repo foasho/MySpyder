@@ -4,7 +4,7 @@ import time
 import math
 import smbus
 import copy
-from .IMU import *
+from .IMU import IMU
 import threading
 from .Servo import*
 import numpy as np
