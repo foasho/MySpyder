@@ -31,8 +31,6 @@ class Kalman_filter:
         self.kalman_adc_old = kalman_adc
         return kalman_adc
 
-
-
 class IMU:
     def __init__(self):
         self.Kp = 100 

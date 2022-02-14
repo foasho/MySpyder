@@ -66,7 +66,7 @@ class SpyderManager:
                     print("GPIO Close")
                     self.close_gpio()
                     break
-                print(self.get_gpio(self.key_switch))
+                print(self.get_gpio(self.key_switch), self.get_gpio(self.button_switch))
                 if self.get_gpio(self.key_switch) and self.mode==ESpyderStatus.safety:
                     self.mode = ESpyderStatus.activate
                     jtalk.start_jtalk("システムアクティベート")
@@ -268,7 +268,7 @@ app.mount(
 )
 
 # マルチプロセッサの設定数
-executor = ThreadPoolExecutor(max_workers=3)
+executor = ThreadPoolExecutor(max_workers=4)
 
 # マルチスレッドで音声認識をOnにする
 if speak_reg.is_connect():
@@ -282,7 +282,8 @@ spyder.start_feature(executor)
 
 if __name__ == "__main__":
     port = 8000
-    if len(sys.argv) > 1:
+    # if len(sys.argv) > 1:
+    if True:
         ## 初期設定
         load_dotenv(override=True)
         dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
@@ -321,6 +322,7 @@ if __name__ == "__main__":
         uvicorn.run(app=app)
 
 print("SYSTEM END")
+camera_controls.camera.close()
 speak_reg.close_feature()
 spyder.close_gpio()
 executor.shutdown(wait=False)

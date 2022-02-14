@@ -66,8 +66,12 @@ def stream_camera(size=(640, 480)):
             print("Quit")
             break
 
+def close_camera():
+    camera.close()
+
 
 
 if __name__ == "__main__":
     print("Test Monitor Camera Check")
     stream_camera()
+    camera.close()

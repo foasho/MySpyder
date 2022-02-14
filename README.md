@@ -86,6 +86,10 @@ sudo nano /proc/sys/fs/inotify/max_user_watches
 8192 => 178400
 ```
 
+```
+sudo chmod 777 /dev/men
+```
+
 ### オレオレ証明書の作成
 ```
 sudo apt-get install openssl -y
@@ -100,4 +104,13 @@ rm -f server.csr
 # 起動方法
 ```
 npm run build
+```
+
+## 自動起動
+```
+sudo nano /etc/rc.local
+---------
+/bin/python /home/pi/myspyder/main.py true
+exit 0
+---------
 ```
