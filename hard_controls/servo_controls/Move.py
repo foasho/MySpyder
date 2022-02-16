@@ -446,6 +446,26 @@ class Control:
             point=self.postureBalance(r,p,0)
             self.coordinateTransformation(point)
             self.setLegAngle()
+
+    def move_run(
+        self, 
+        cmd, 
+        gait, 
+        x_coord,
+        y_coord,
+        speed,
+        angle
+    ):
+        self.run(
+            data=[
+                str(cmd),
+                str(gait),
+                str(x_coord),
+                str(y_coord),
+                str(value),
+                str(angle)
+            ]
+        )
  
     def run(self,data,Z=40,F=64):
         """
@@ -453,6 +473,8 @@ class Control:
         #example : data=['CMD_MOVE', '1', '0', '25', '10', '0']
         data: 例 = ['CMD_MOVE', '1', '0', '25', '10', '0']
         """
+        x_coord = data[2]
+        y_coord = data[3]
         gait=data[1]
         x=self.restriction(int(data[2]),-35,35)
         y=self.restriction(int(data[3]),-35,35)
@@ -472,9 +494,11 @@ class Control:
         for i in range(6):
             xy[i][0]=((point[i][0]*math.cos(angle/180*math.pi)+point[i][1]*math.sin(angle/180*math.pi)-point[i][0])+x)/F
             xy[i][1]=((-point[i][0]*math.sin(angle/180*math.pi)+point[i][1]*math.cos(angle/180*math.pi)-point[i][1])+y)/F
+        # すべて０の場合
         if x == 0 and y == 0 and angle==0:
             self.coordinateTransformation(point)
             self.setLegAngle()
+        # 通常移動
         elif gait=="1" :
             for j in range (F):
                 for i in range(3):

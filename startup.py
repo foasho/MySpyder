@@ -69,6 +69,9 @@ while True:
         if cmd == "test":
             test_move = ['CMD_MOVE', '1', '0', '25', '10', '0']
             control.run(test_move)
+        if cmd == "test2":
+            test_move = ['CMD_MOVE', '1', '0', '25', '1', '0']
+            control.run(test_move)
     except KeyboardInterrupt:
         print("Quit")
         break
