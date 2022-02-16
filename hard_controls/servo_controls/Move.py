@@ -94,6 +94,14 @@ class Control:
         self.calibration_angle=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
         self.angle=[[90,0,0],[90,0,0],[90,0,0],[90,0,0],[90,0,0],[90,0,0]]
         self.order=['','','','','','']
+        # 顔のハンドル中かどうか
+        self.is_face_moving = False
+        self.init_face_x = 130
+        self.init_face_y = 60
+        self.now_face_x = 130
+        self.now_face_y = 60
+        self.max_face_degreex = 90 # 最大可動域X
+        self.max_face_degreey = 60 # 最大可動域Y
         # 軸調整
         self.calibration()
         # 足をセット
@@ -462,11 +470,38 @@ class Control:
                 str(gait),
                 str(x_coord),
                 str(y_coord),
-                str(value),
+                str(speed),
                 str(angle)
             ]
         )
- 
+    
+    def face_init(self):
+        self.servo.setServoAngle(1, int(self.init_face_y))
+        self.servo.setServoAngle(0, int(self.init_face_x))
+        self.now_face_x = self.init_face_x
+        self.now_face_y = self.init_face_y
+    
+    def face_move(self, x_ratio, y_ratio, speed=100):
+        """
+        """
+        if -1 < x_ratio < 1 and -1 < y_ratio < 1:
+            if not self.is_face_moving:
+                self.is_face_moving = True
+                move_x = self.init_face_x + (self.max_face_degreex*x_ratio*-1)
+                xr = 1 if move_x > 0 else -1
+                yr = 1 if move_y > 0 else -1
+                move_y = self.init_face_y + (self.max_face_degreey*y_ratio)
+                s = 0.05 / speed
+                # X軸移動
+                for i in range(self.now_face_x, int(move_x), xr):
+                    self.servo.setServoAngle(0, int(i))
+                    time.sleep(s)
+                # Y軸移動
+                for i in range(self.now_face_y, int(move_y), yr):
+                    self.servo.setServoAngle(1, int(i))
+                    time.sleep(s)
+                self.is_face_moving = False
+    
     def run(self,data,Z=40,F=64):
         """
         動作の実行

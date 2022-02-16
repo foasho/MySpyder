@@ -59,19 +59,45 @@
 # test_Servo()
 
 
-## [ カメラテスト ]
+## [ 足の動作テスト ]
 
+# from hard_controls.servo_controls import Move
+# control = Move.Control()
+# while True:
+#     try:
+#         cmd = input()
+#         if cmd == "test":
+#             test_move = ['CMD_MOVE', '1', '0', '25', '10', '0']
+#             control.run(test_move)
+#         if cmd == "test2":
+#             test_move = ['CMD_MOVE', '1', '0', '25', '1', '0']
+#             control.run(test_move)
+#     except KeyboardInterrupt:
+#         print("Quit")
+#         break
+
+## [ 顔の動きテスト ]
+# from hard_controls.servo_controls import Servo
 from hard_controls.servo_controls import Move
+import time
 control = Move.Control()
 while True:
     try:
         cmd = input()
-        if cmd == "test":
-            test_move = ['CMD_MOVE', '1', '0', '25', '10', '0']
-            control.run(test_move)
-        if cmd == "test2":
-            test_move = ['CMD_MOVE', '1', '0', '25', '1', '0']
-            control.run(test_move)
+        if cmd == "init":
+            control.face_init()
+        if cmd == "facex":
+            control.face_move(
+                x_ratio=0.5,
+                y_ratio=0
+            )
+        if cmd == "facey":
+            control.face_move(
+                x_ratio=0,
+                y_ratio=0.5,
+                speed = 1
+            )
+
     except KeyboardInterrupt:
         print("Quit")
         break
