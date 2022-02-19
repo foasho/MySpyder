@@ -1,0 +1,41 @@
+.login {
+    .successModal {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        .frame {
+            padding: 1rem;
+            .title {
+                font-weight: bolder;
+            }
+            .ok {
+                z-index: 101;
+                margin: 20px 5px 5px;
+                text-align: center;
+                .btn {
+                    margin: 0 8px;
+                }
+            }
+        }
+    }
+    .inputArea {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 30vw;
+        max-width: 300px;
+        .content {
+            display: flex;
+            justify-content: center;
+            text-align: center;
+            .btn {
+                //padding: 3px;
+                margin: 3px 6px;
+                font-size: 20px;
+                font-weight: 700;
+            }
+        }
+    }
+}

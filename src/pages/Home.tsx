@@ -1,5 +1,5 @@
 import React, { Fragment, useRef } from "react";
-import { ArwesThemeProvider, StylesBaseline, Figure, FrameBox, Text } from "@arwes/core";
+import { ArwesThemeProvider, StylesBaseline, Figure, FrameBox, Text, Button } from "@arwes/core";
 import { AnimatorGeneralProvider } from "@arwes/animation";
 import { BleepSettings, BleepsProvider } from "@arwes/sounds";
 import { ButtonComponent } from "../components/Button";
@@ -7,13 +7,17 @@ import styles from "../App.module.scss";
 import { Joystick } from "react-joystick-component";
 import { InputComponent } from "../components/Input";
 import { Row, Col } from 'antd';
-import { DownOutlined, UpOutlined } from "@ant-design/icons";
+import { DownOutlined, UpOutlined, ExclamationOutlined, BellFilled, LogoutOutlined } from "@ant-design/icons";
+import {Card, FrameLines} from "@arwes/core/lib";
+import { useHistory } from 'react-router-dom';
 
 const ROOT_FONT_FAMILY = '"Titillium Web", sans-serif';
 const IMAGE_URL = '/assets/images/wallpaper.jpg';
 const SOUND_OBJECT_URL = '/assets/sounds/object.mp3';
 const SOUND_TYPE_URL = '/assets/sounds/type.mp3';
 
+// --  Settings -- //
+const animatorGeneral = { duration: { enter: 200, exit: 200 } };
 const audioSettings = { common: { volume: 1.00 } };
 const playersSettings = {
   object: { src: [SOUND_OBJECT_URL] },
@@ -23,14 +27,24 @@ const bleepsSettings = {
   object: { player: 'object' },
   type: { player: 'type' }
 };
+// -- -------- -- //
 
 interface IMessage {
     user: "Customer"| "Spyder" | "Administrator";
     message: string;
 }
 
+export enum ESendActions {
+    updateFrame = "frame",
+    sendMessage = "message",
+    moveBodyOrder = "move_body",
+    stopBodyOrder = "stop_body",
+    moveCameraOrder = "camera_body",
+    stopCameraOrder = "camera_body",
+}
+
 export const HomeComponent: React.FC = () => {
-    
+
     const ws = useRef(null);
 
     const [state, setState] = React.useState({
@@ -41,13 +55,30 @@ export const HomeComponent: React.FC = () => {
         isMessageInput: false,
         messageText: "",
         messages: [],
-        messageHistoryView: true
+        messageHistoryView: true,
+        isStart: false,
+        isNew: false,
+        openInformation: false,
+        autoCameraAxis: false,
+        relaxMode: false,
+        recognition: {
+            // username: "",
+            // department: "",
+            // job: "",
+            // address: "",
+            // image_base64: "",
+            username     : "Sho Osaka",
+            department   : "Departments",
+            job          : "Programmer",
+            address      : "Address",
+            image_base64 : "",
+        }
     });
 
     const sendWSCameraUpdate = () => {
         if (!ws.current) return;
         try {
-            ws.current.send(JSON.stringify({"actions": [`frame`], "frame": state.frameCount}));
+            ws.current.send(JSON.stringify({"actions": [ESendActions.updateFrame], "frame": state.frameCount}));
             setState({...state, frameCount: state.frameCount + 1});
         }
         catch(e){}
@@ -72,6 +103,7 @@ export const HomeComponent: React.FC = () => {
         catch(e){
             console.log("Error Close");
         }
+        setTimeout(() => { setState({...state, isStart: true }) }, 1000);
     }, []);
 
     React.useEffect(() => {
@@ -91,7 +123,6 @@ export const HomeComponent: React.FC = () => {
               });
           }
         };
-
         const intervalId = setInterval(() => {
             sendWSCameraUpdate()
         }, 250);
@@ -101,29 +132,88 @@ export const HomeComponent: React.FC = () => {
 
     }, [state]);
 
-    const sendWSData = () => {
+    /**
+     * メッセージ送信
+     */
+    const sendWSData = (data) => {
         if (!ws.current) return;
-        const data = {
-            actions: ["message"],
-            message: state.messageText
-        }
         ws.current.send(JSON.stringify(data));
     }
 
+    /**
+     * 左スティック動作時
+     * @param event
+     */
     const leftStickMove = (event) => {
-        console.log(event);
+        const val = convertMoveValue(event);
+        const data = {
+            actions: [ESendActions.moveBodyOrder],
+            x_ratio: val.x_ratio,
+            y_ratio: val.y_ratio,
+            speed: val.speed,
+        };
+        sendWSData(data);
     }
 
+    /**
+     * 左スティック停止時
+     * @param event
+     */
     const leftStickStop = (event) => {
-        console.log(event);
+        const val = convertMoveValue(event);
+        const data = {
+            actions: [ESendActions.stopBodyOrder],
+            x_ratio: val.x_ratio,
+            y_ratio: val.y_ratio,
+            speed: val.speed,
+        };
+        sendWSData(data);
     }
 
+    /**
+     * 【カメラ向き操作】
+     * 右スティック動作時
+     * @param event
+     */
     const rightStickMove = (event) => {
-        console.log(event);
+        const val = convertMoveValue(event);
+        const data = {
+            actions: [ESendActions.moveCameraOrder],
+            x_ratio: val.x_ratio,
+            y_ratio: val.y_ratio,
+            speed: val.speed,
+        };
+        sendWSData(data);
     }
 
+    /**
+     * 右スティック停止時
+     * @param event
+     */
     const rightStickStop = (event) => {
-        console.log(event);
+        if (!state.autoCameraAxis){
+            const val = convertMoveValue(event);
+            const data = {
+                actions: [ESendActions.moveBodyOrder],
+                x_ratio: val.x_ratio,
+                y_ratio: val.y_ratio,
+                speed: val.speed,
+            };
+            sendWSData(data);
+        }
+    }
+
+    const convertMoveValue = (event) => {
+        const speed = event.distance;
+        const x = Math.abs(event.x/100) > 1? (event.x/100 > 0? 0.99: -0.99): event.x/100;
+        const y = Math.abs(event.y/100) > 1? (event.y/100 > 0? 0.99: -0.99): event.y/100;
+        const x_ratio = speed/100 * x;
+        const y_ratio = speed/100 * y;
+        return {
+            x_ratio: x_ratio,
+            y_ratio: y_ratio,
+            speed  : speed
+        }
     }
 
     const getSize = () => {
@@ -131,9 +221,24 @@ export const HomeComponent: React.FC = () => {
         return Number(h/5)
     }
 
+    /**
+     * メッセージ送信
+     */
     const sendMessage = () => {
-        sendWSData();
-        setState({...state, messageText: ""})
+        const data = {
+            actions: [ESendActions.sendMessage],
+            message: state.messageText
+        }
+        sendWSData(data);
+        const messages: IMessage[] = state.messages;
+        if (state.messageText.length > 0){
+            messages.push({
+                user: "Administrator",
+                message: state.messageText
+            });
+        }
+
+        setState({ ...state, messageText: "", messages: messages });
     }
 
     return (
@@ -146,115 +251,190 @@ export const HomeComponent: React.FC = () => {
                         playersSettings={playersSettings}
                         bleepsSettings={bleepsSettings}
                     >
-                        <div className={styles.controlTouchView}>
+                        <AnimatorGeneralProvider animator={{ duration: { enter: 200, exit: 200 }}}>
+                            <div className={styles.controlTouchView}>
                             {state.isMessageInput &&
                                 <div className={styles.messageInput}>
-
                                     <>
                                         <Row>
                                             <Col span={24}>
-                                                <InputComponent 
-                                                    value={state.messageText}
-                                                    onChange={(text: string) => {
-                                                        setState({...state, messageText: text});
-                                                    }}
-                                                ></InputComponent>
+                                                <FrameLines>
+                                                    <input
+                                                        type={"text"}
+                                                        onInput={
+                                                            (e: any) => {
+                                                                setState({...state, messageText: e.target.value});
+                                                            }
+                                                        }
+                                                        value={state.messageText}
+                                                    />
+                                                </FrameLines>
                                             </Col>
                                         </Row>
                                         <Row style={{textAlign: "center"}}>
                                             <span>
-                                                <ButtonComponent 
-                                                    text={"CANCEL"} 
-                                                    type="frame"
+                                                <Button
+                                                    animator={{ activate: state.isStart }}
                                                     onClick={() => {
                                                         setState({...state, isMessageInput: false, messageText: "" })
                                                     }}
-                                                ></ButtonComponent>
+                                                >
+                                                    <Text>CANCEL</Text>
+                                                </Button>
                                             </span>
                                             <span>
-                                                <ButtonComponent 
-                                                    text={"Message SEND "} 
-                                                    type="frame"
+                                                <Button
+                                                    animator={{ activate: state.isStart }}
                                                     onClick={() => {
                                                         sendMessage()
                                                     }}
-                                                ></ButtonComponent>
+                                                >
+                                                    <Text>Message SEND</Text>
+                                                </Button>
                                             </span>
                                         </Row>
                                     </>
-                                
+
                                 </div>
                             }
-                            <div className={styles.messageTrig}>
-                                <ButtonComponent 
-                                    type="basic"
-                                    text={"Chat"} 
-                                    onClick={() => setState({...state, isMessageInput: !state.isMessageInput})}
-                                ></ButtonComponent>
-                            </div>
-                            <div className={styles.messageHistory}>
-                                <AnimatorGeneralProvider animator={{ duration: { enter: 200, exit: 200 }}}>                                
+                                <div className={styles.messageTrig}>
+                                    <Button
+                                        animator={{ activate: state.isStart }}
+                                        onClick={() => {
+                                            setState({...state, isMessageInput: !state.isMessageInput})
+                                        }}
+                                    >
+                                        <Text>Chat Message</Text>
+                                    </Button>
+                                </div>
+                                <div className={styles.messageHistory}>
                                     <FrameBox>
                                         <div className={styles.content}>
-                                            [ Messages ]   
+                                            [ Messages ]
                                             <span>
                                                 <DownOutlined />
-                                            </span> 
+                                            </span>
                                         </div>
-                                        {state.messageHistoryView && 
-                                            <div>
+                                        {state.messageHistoryView &&
+                                            <div className={styles.content}>
                                                 {state.messages.map(mes => {
                                                     return (
-                                                        <>
+                                                        <div>
                                                             {`${mes.user}>> ${mes.message}`}
-                                                        </>
+                                                        </div>
                                                     )
                                                 })}
                                             </div>
                                         }
                                     </FrameBox>
-                                </AnimatorGeneralProvider>
+                                </div>
+                                <div className={styles.informationViewer}>
+                                    <div className={styles.icon}
+                                         onClick={() =>
+                                             setState({...state, openInformation: !state.openInformation })
+                                         }
+                                    >
+                                        <ExclamationOutlined />
+                                    </div>
+                                    {state.isNew &&
+                                        <div className={styles.badge}>
+                                            <BellFilled />
+                                        </div>
+                                    }
+                                    {state.openInformation &&
+                                        <div className={styles.information}>
+                                            {state.recognition.username.length>0 &&
+                                                <Card
+                                                    animator={{ duration: { enter: 200, exit: 200 }}}
+                                                    image={{
+                                                      src: state.recognition.image_base64,
+                                                      alt: 'FaceImage'
+                                                    }}
+                                                    title={state.recognition.username}
+                                                    options={
+                                                      <Button palette='secondary'>
+                                                        <Text>Contact</Text>
+                                                      </Button>
+                                                    }
+                                                    style={{ maxWidth: 400, minWidth: 250 }}
+                                                >
+                                                    <Text>
+                                                        Dept: {state.recognition.department}
+                                                        <br/>
+                                                        Jobs: {state.recognition.job}
+                                                        <br/>
+                                                        Addr: {state.recognition.address}
+                                                        <br/>
+                                                    </Text>
+                                                </Card>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                                <div className={styles.functionalArea}>
+                                    <div className={styles.title}>
+                                        <FrameLines>
+                                            <Text className={styles.name}>
+                                                Main Monitor
+                                            </Text>
+                                            <Button>
+                                                <LogoutOutlined />
+                                            </Button>
+                                        </FrameLines>
+                                    </div>
+                                </div>
+                                <div className={styles.joystickLeft}>
+                                    <div className={styles.sub}>
+                                        <Text className={styles.name}>Move</Text>
+                                        <Button FrameComponent={FrameBox} onClick={() => {
+                                            setState({...state, relaxMode: !state.relaxMode})
+                                        }}>
+                                            <Text>
+                                                {state.relaxMode? "RELAX": "RUN"}
+                                            </Text>
+                                        </Button>
+                                    </div>
+                                    <Joystick
+                                        size={getSize()}
+                                        sticky={false}
+                                        baseColor="#ffffff22"
+                                        stickColor="rgb(0 240 255)"
+                                        move={leftStickMove}
+                                        stop={leftStickStop}
+                                    ></Joystick>
+                                </div>
+                                <div className={styles.joystickRight}>
+                                    <div className={styles.sub}>
+                                        <Text className={styles.name}>Camera</Text>
+                                        <Button FrameComponent={FrameBox} onClick={() => {
+                                            setState({...state, autoCameraAxis: !state.autoCameraAxis})
+                                        }}>
+                                            <Text>
+                                                {state.autoCameraAxis? "Auto": "Fixed"}
+                                            </Text>
+                                        </Button>
+                                    </div>
+                                    <Joystick
+                                        size={getSize()}
+                                        sticky={!state.autoCameraAxis}
+                                        baseColor="#ffffff22"
+                                        stickColor="#CCCCFF"
+                                        move={rightStickMove}
+                                        stop={rightStickStop}
+                                    ></Joystick>
+                                </div>
                             </div>
-                            <div className={styles.functionalBtn}>
-                                <Row>
-                                    <Col></Col>
-                                    <Col></Col>
-                                    <Col></Col>
-                                </Row>
-                            </div>
-                            <div className={styles.joystickLeft}>
-                                <Joystick 
-                                    size={getSize()} 
-                                    sticky={false} 
-                                    baseColor="#ffffff22" 
-                                    stickColor="rgb(0 240 255)" 
-                                    move={leftStickMove} 
-                                    stop={leftStickStop}
-                                ></Joystick>
-                            </div>
-                            <div className={styles.joystickRight}>
-                                <Joystick 
-                                    size={getSize()} 
-                                    sticky={false} 
-                                    baseColor="#ffffff22" 
-                                    stickColor="rgb(0 240 255)" 
-                                    move={rightStickMove} 
-                                    stop={rightStickStop}
-                                ></Joystick>
-                            </div>
-                        </div>
-                        <div className={styles.cameraView}>
-                            {state.captureImage &&
+
+                            <div className={styles.cameraView}>
                                 <Figure
-                                    src={state.captureImage}
-                                    alt='Capture From Spyder'
+                                    src={state.captureImage? state.captureImage: IMAGE_URL}
+                                    alt=''
                                     fluid
                                 >
-                                A nebula is an interstellar cloud of dust, hydrogen, helium and
-                                other ionized gases.
+                                Product No: SPY-MODEL-A1 SYSTEM Control Panel.
                                 </Figure>
-                            }
                         </div>
+                        </AnimatorGeneralProvider>
                     </BleepsProvider>
                 </ArwesThemeProvider>
             </div>
