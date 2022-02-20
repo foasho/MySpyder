@@ -15,6 +15,7 @@ import asyncio
 import requests
 from concurrent.futures import ThreadPoolExecutor
 import RPi.GPIO as GPIO # RPi.GPIOモジュールを使用
+from hard_controls.servo_controls import Move
 
 app = FastAPI(
     title="Spyder"
@@ -28,6 +29,15 @@ app = FastAPI(
 # )
 
 # _dir = os.getcwd().split("/")[-1]
+
+class ESendActions: 
+    updateFrame = "frame"
+    sendMessage = "message"
+    moveBodyOrder = "move_body"
+    stopBodyOrder = "stop_body"
+    moveCameraOrder = "camera_body"
+    stopCameraOrder = "camera_body"
+
 
 class ESpyderStatus:
     safety = 0
@@ -44,6 +54,8 @@ class SpyderManager:
         self.button_switch = 6
         self.feature = None
         self.end = False
+        # 本体の操作
+        self.control = Move.Control()
 
     def set_gpio(self):
         GPIO.setmode(GPIO.BCM)
@@ -66,7 +78,7 @@ class SpyderManager:
                     print("GPIO Close")
                     self.close_gpio()
                     break
-                print(self.get_gpio(self.key_switch), self.get_gpio(self.button_switch))
+                # print(self.get_gpio(self.key_switch), self.get_gpio(self.button_switch))
                 if self.get_gpio(self.key_switch) and self.mode==ESpyderStatus.safety:
                     self.mode = ESpyderStatus.activate
                     jtalk.start_jtalk("システムアクティベート")
@@ -132,11 +144,13 @@ class SpeakRecognitionManager:
     def start_recognitions(self):
         while True:
             try:
+                if self.end:
+                    break
                 audio_source = mic_controls.mic_get_audio_stream(
                     record_type=mic_controls.RecordType.WhileThreads, 
                     record_secs=5, 
                     record_thread=0.01, 
-                    is_save=True, 
+                    is_save=False, 
                     output_name="recognision.wav"
                 )
                 if self.end:
@@ -227,7 +241,7 @@ async def process_ws(websocket: WebSocket, client_id: int):
                 if not len(actions) >= 1:
                     continue
 
-                print(data)
+                print(data)# データの確認
 
                 for action in actions:  
                     # Convert to PIL image
@@ -236,10 +250,24 @@ async def process_ws(websocket: WebSocket, client_id: int):
                         pil_image = camera_controls.get_capture()
                         res["image_base64"] = camera_controls.convert_pil_to_base64(pil_image=pil_image) 
                     
-                    if action == "message":
+                    if action == ESendActions.sendMessage:
                         # 読み上げ
                         if data["message"] and len(data["message"]) > 0:
                             jtalk.start_jtalk(data["message"])
+
+                    if action == ESendActions.moveBodyOrder:
+                        # きたいのそうさ
+                        x_ratio = data["x_ratio"]
+                        y_ratio = data["y_ratio"]
+                        speed   = data["speed"]
+                        spyder.control.move_run(
+                            cmd=Move.COMMAND.CMD_MOVE,
+                            gait=0,
+                            x_coord=x_ratio*100,
+                            y_coord=y_ratio*100,
+                            speed=speed,
+                            angle=0
+                        )
                         
             except Exception as e:
                 print(f"## ERROR = {str(e)}")
@@ -268,7 +296,7 @@ app.mount(
 )
 
 # マルチプロセッサの設定数
-executor = ThreadPoolExecutor(max_workers=4)
+executor = ThreadPoolExecutor(max_workers=5)
 
 # マルチスレッドで音声認識をOnにする
 if speak_reg.is_connect():
@@ -322,6 +350,7 @@ if __name__ == "__main__":
         uvicorn.run(app=app)
 
 print("SYSTEM END")
+spyder.control.relax()
 camera_controls.camera.close()
 speak_reg.close_feature()
 spyder.close_gpio()

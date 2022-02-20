@@ -108,6 +108,8 @@ class Control:
         self.setLegAngle()
         # 変更監視で動作させる
         self.Thread_conditiona=threading.Thread(target=self.condition)
+        # かおINIT
+        self.face_init()
     
     def readFromTxt(self,filename):
         """ ローカルの設定ファイル(point.txt)を読み込む """
@@ -458,7 +460,7 @@ class Control:
     def move_run(
         self, 
         cmd, 
-        gait, 
+        gait, # 歩行種別：0つうじょう 1:ひとつずつ
         x_coord,
         y_coord,
         speed,
