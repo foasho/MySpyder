@@ -56,6 +56,7 @@ class SpyderManager:
         self.end = False
         # 本体の操作
         self.control = Move.Control()
+        self.control_flag = False
 
     def set_gpio(self):
         GPIO.setmode(GPIO.BCM)
@@ -81,12 +82,12 @@ class SpyderManager:
                 # print(self.get_gpio(self.key_switch), self.get_gpio(self.button_switch))
                 if self.get_gpio(self.key_switch) and self.mode==ESpyderStatus.safety:
                     self.mode = ESpyderStatus.activate
-                    jtalk.start_jtalk("システムアクティベート")
+                    jtalk.start_jtalk("コントロール権限　管理者")
                     jtalk.start_jtalk("すべての利用権限を付与します。")
                 
                 if self.get_gpio(self.key_switch) == 0 and self.mode==ESpyderStatus.activate:
                     self.mode = ESpyderStatus.safety
-                    jtalk.start_jtalk("システムセーフティモード")
+                    jtalk.start_jtalk("コントロール権限　一般")
                     jtalk.start_jtalk("一部の操作のみを許可します。")
                 
                 if self.get_gpio(self.button_switch) and self.mode == ESpyderStatus.activate:
@@ -236,7 +237,11 @@ async def process_ws(websocket: WebSocket, client_id: int):
                 "image_base64": None,
             }
 
+            if spyder.control_flag:
+                continue
+
             try:
+                spyder.control_flag = True
                 actions = data["actions"]
                 if not len(actions) >= 1:
                     continue
@@ -263,16 +268,19 @@ async def process_ws(websocket: WebSocket, client_id: int):
                         spyder.control.move_run(
                             cmd=Move.COMMAND.CMD_MOVE,
                             gait=0,
-                            x_coord=x_ratio*100,
-                            y_coord=y_ratio*100,
+                            x_coord=x_ratio*10,
+                            y_coord=y_ratio*10,
                             speed=speed,
                             angle=0
                         )
+
+                spyder.control_flag = False
                         
             except Exception as e:
                 print(f"## ERROR = {str(e)}")
                 import traceback
                 traceback.print_exc()
+                spyder.control_flag = False
                 pass
 
             time.sleep(0.001)
@@ -350,8 +358,8 @@ if __name__ == "__main__":
         uvicorn.run(app=app)
 
 print("SYSTEM END")
-spyder.control.relax()
-camera_controls.camera.close()
+# spyder.control.relax()
+# camera_controls.camera.close()
 speak_reg.close_feature()
 spyder.close_gpio()
 executor.shutdown(wait=False)

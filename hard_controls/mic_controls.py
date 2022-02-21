@@ -19,6 +19,7 @@ samp_rate = 44100 # 44.1kHz　サンプリング周波数
 chunk = 4096 # 2^12 一度に取得するデータ数
 dev_index = 2 # デバイス番号
 wav_output_filename = 'test.wav' # 出力するファイル
+output_dir = "./output/"
 
 def mic_get_audio_stream(
     record_type=RecordType.Seconds, 
@@ -41,7 +42,7 @@ def mic_get_audio_stream(
             frames.append(data)
         # save the audio frames as .wav file
         if is_save:
-            output_dir = "./output/"
+            
             if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
             wavefile = wave.open(output_dir+output_name,'wb')

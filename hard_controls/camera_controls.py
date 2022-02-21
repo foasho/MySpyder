@@ -46,6 +46,7 @@ def get_capture(ret_type = ImageType.Pillow):
     stream = BytesIO()
     with PiCamera() as camera:
         camera.resolution = (640, 480)
+        # camera.resolution = (480,320)
         camera.capture(stream, format='jpeg')
     # camera.capture(stream, format='jpeg')
     stream.seek(0)
@@ -66,12 +67,12 @@ def stream_camera(size=(640, 480)):
             print("Quit")
             break
 
-def close_camera():
-    camera.close()
+# def close_camera():
+#     camera.close()
 
 
 
 if __name__ == "__main__":
     print("Test Monitor Camera Check")
     stream_camera()
-    camera.close()
+    # camera.close()

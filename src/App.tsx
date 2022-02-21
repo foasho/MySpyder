@@ -12,8 +12,9 @@ const App: React.FC = () => {
             <div id="popup_modal"></div>
             <Router>
                 <Switch>
-                    <Route render={() => <HomeComponent></HomeComponent>} path="/Access"></Route>
-                    <Route render={() => <LoginComponent></LoginComponent>} path="/"></Route>
+                <Route render={() => <HomeComponent></HomeComponent>} path="/"></Route>
+                    {/* <Route render={() => <HomeComponent></HomeComponent>} path="/Access"></Route> */}
+                    {/* <Route render={() => <LoginComponent></LoginComponent>} path="/"></Route> */}
                 </Switch>
             </Router>
         </div>

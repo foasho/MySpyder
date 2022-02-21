@@ -27,6 +27,7 @@ const bleepsSettings = {
   object: { player: 'object' },
   type: { player: 'type' }
 };
+const capTimerMS = 2500;
 // -- -------- -- //
 
 interface IMessage {
@@ -125,7 +126,7 @@ export const HomeComponent: React.FC = () => {
         };
         const intervalId = setInterval(() => {
             sendWSCameraUpdate()
-        }, 250);
+        }, capTimerMS);
         return () => {
             clearInterval(intervalId);
         };
