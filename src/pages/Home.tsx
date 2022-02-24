@@ -54,6 +54,7 @@ export const HomeComponent: React.FC = () => {
         captureImage: null,
         stickSize: 150,
         isMessageInput: false,
+        isWorking: false,
         messageText: "",
         messages: [],
         messageHistoryView: true,
@@ -118,6 +119,9 @@ export const HomeComponent: React.FC = () => {
               if (data.image_base64){
                   update_state["captureImage"] = data["image_base64"]
               }
+              if (data.is_working){
+                update_state["isWorking"] = data["is_working"].toString()=="True"? true: false;
+              }
               setState({
                   ...state,
                   ...update_state
@@ -153,6 +157,7 @@ export const HomeComponent: React.FC = () => {
             y_ratio: val.y_ratio,
             speed: val.speed,
         };
+        if (state.isWorking) return;
         sendWSData(data);
     }
 
@@ -168,6 +173,7 @@ export const HomeComponent: React.FC = () => {
             y_ratio: val.y_ratio,
             speed: val.speed,
         };
+        if (state.isWorking) return;
         sendWSData(data);
     }
 
@@ -184,6 +190,7 @@ export const HomeComponent: React.FC = () => {
             y_ratio: val.y_ratio,
             speed: val.speed,
         };
+        if (state.isWorking) return;
         sendWSData(data);
     }
 
@@ -200,6 +207,7 @@ export const HomeComponent: React.FC = () => {
                 y_ratio: val.y_ratio,
                 speed: val.speed,
             };
+            if (state.isWorking) return;
             sendWSData(data);
         }
     }
@@ -300,7 +308,6 @@ export const HomeComponent: React.FC = () => {
                             }
                                 <div className={styles.messageTrig}>
                                     <Button
-                                        animator={{ activate: state.isStart }}
                                         onClick={() => {
                                             setState({...state, isMessageInput: !state.isMessageInput})
                                         }}

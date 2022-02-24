@@ -30,7 +30,7 @@ app = FastAPI(
 
 # _dir = os.getcwd().split("/")[-1]
 
-class ESendActions: 
+class ESendActions:
     updateFrame = "frame"
     sendMessage = "message"
     moveBodyOrder = "move_body"
@@ -70,7 +70,7 @@ class SpyderManager:
         self.end = True
         time.sleep(0.5)
         GPIO.cleanup()
-    
+
     def start_gpio(self):
         while True:
             try:
@@ -84,12 +84,12 @@ class SpyderManager:
                     self.mode = ESpyderStatus.activate
                     jtalk.start_jtalk("コントロール権限　管理者")
                     jtalk.start_jtalk("すべての利用権限を付与します。")
-                
+
                 if self.get_gpio(self.key_switch) == 0 and self.mode==ESpyderStatus.activate:
                     self.mode = ESpyderStatus.safety
                     jtalk.start_jtalk("コントロール権限　一般")
                     jtalk.start_jtalk("一部の操作のみを許可します。")
-                
+
                 if self.get_gpio(self.button_switch) and self.mode == ESpyderStatus.activate:
                     self.clear_lcd()
                     ip = get_ips.get_ip()
@@ -114,7 +114,7 @@ class SpyderManager:
     def set_recent_data(self, recent_data):
         self.recent_data = recent_data
         self.end = True
-    
+
     def get_recent_data(self):
         return self.recent_data
 
@@ -148,10 +148,10 @@ class SpeakRecognitionManager:
                 if self.end:
                     break
                 audio_source = mic_controls.mic_get_audio_stream(
-                    record_type=mic_controls.RecordType.WhileThreads, 
-                    record_secs=5, 
-                    record_thread=0.01, 
-                    is_save=False, 
+                    record_type=mic_controls.RecordType.WhileThreads,
+                    record_secs=5,
+                    record_thread=0.01,
+                    is_save=False,
                     output_name="recognision.wav"
                 )
                 if self.end:
@@ -235,9 +235,12 @@ async def process_ws(websocket: WebSocket, client_id: int):
 
             res = {
                 "image_base64": None,
+                "is_working": spyder.control_flag,
             }
 
             if spyder.control_flag:
+                time.sleep(0.5)
+                await conn_mgr.send_message(json.dumps(res), websocket)
                 continue
 
             try:
@@ -248,13 +251,13 @@ async def process_ws(websocket: WebSocket, client_id: int):
 
                 print(data)# データの確認
 
-                for action in actions:  
+                for action in actions:
                     # Convert to PIL image
                     if action == "frame":
                         # 画像の取得
                         pil_image = camera_controls.get_capture()
-                        res["image_base64"] = camera_controls.convert_pil_to_base64(pil_image=pil_image) 
-                    
+                        res["image_base64"] = camera_controls.convert_pil_to_base64(pil_image=pil_image)
+
                     if action == ESendActions.sendMessage:
                         # 読み上げ
                         if data["message"] and len(data["message"]) > 0:
@@ -267,15 +270,15 @@ async def process_ws(websocket: WebSocket, client_id: int):
                         speed   = data["speed"]
                         spyder.control.move_run(
                             cmd=Move.COMMAND.CMD_MOVE,
-                            gait=0,
-                            x_coord=x_ratio*10,
-                            y_coord=y_ratio*10,
+                            gait=1,
+                            x_coord=x_ratio*100,
+                            y_coord=y_ratio*100,
                             speed=speed,
                             angle=0
                         )
 
                 spyder.control_flag = False
-                        
+
             except Exception as e:
                 print(f"## ERROR = {str(e)}")
                 import traceback
@@ -298,8 +301,8 @@ async def process_ws(websocket: WebSocket, client_id: int):
         await conn_mgr.broadcast(f"Client #{client_id} left the chat")
 
 app.mount(
-    "/", 
-    StaticFiles(directory=f"build", html=True), 
+    "/",
+    StaticFiles(directory=f"build", html=True),
     name="html"
 )
 
@@ -327,15 +330,15 @@ if __name__ == "__main__":
         APIURL = os.environ.get("REACT_APP_APIURL")
         dotenv_file = dotenv.find_dotenv()
         ip = get_ips.get_ip()
-        value = ip if ip else ip 
+        value = ip if ip else ip
         dotenv.set_key(dotenv_file, "REACT_APP_APIURL", f"https://{value}:{port}/")
-        
+
         # サーバーを起動する
         print("### Hosting ###")
         print(f"https://{value}:{port}/")
         uvicorn.run(
-            app="main:app", 
-            host="0.0.0.0", 
+            app="main:app",
+            host="0.0.0.0",
             port=port,
             ssl_keyfile="./server.key",
             ssl_certfile="./server.crt",
@@ -349,9 +352,9 @@ if __name__ == "__main__":
         APIURL = os.environ.get("REACT_APP_APIURL")
         dotenv_file = dotenv.find_dotenv()
         ip = "localhost"
-        value = ip if ip else ip 
+        value = ip if ip else ip
         dotenv.set_key(dotenv_file, "REACT_APP_APIURL", f"http://{value}:{port}/")
-        
+
         # サーバーを起動する
         print("### Hosting ###")
         print(f"http://{value}:{port}/")

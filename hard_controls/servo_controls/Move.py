@@ -43,7 +43,7 @@ class Incremental_PID:
     def PID_compute(self,feedback_val):
         error = self.setPoint - feedback_val
         self.P_error = self.Kp * error
-        self.I_error += error 
+        self.I_error += error
         self.D_error = self.Kd * (error - self.last_error)
         if (self.I_error < -self.I_saturation ):
             self.I_error = -self.I_saturation
@@ -81,11 +81,11 @@ class Control:
         self.timeout=0
         self.height=-25
         self.body_point=[
-            [137.1 ,189.4 , self.height], 
-            [225, 0, self.height], 
-            [137.1 ,-189.4 , self.height], 
-            [-137.1 ,-189.4 , self.height], 
-            [-225, 0, self.height], 
+            [137.1 ,189.4 , self.height],
+            [225, 0, self.height],
+            [137.1 ,-189.4 , self.height],
+            [-137.1 ,-189.4 , self.height],
+            [-225, 0, self.height],
             [-137.1 ,189.4 , self.height]
         ]
         # 調整用テキストの読み込み
@@ -110,7 +110,7 @@ class Control:
         self.Thread_conditiona=threading.Thread(target=self.condition)
         # かおINIT
         self.face_init()
-    
+
     def readFromTxt(self,filename):
         """ ローカルの設定ファイル(point.txt)を読み込む """
         file1 = open(filename + ".txt", "r")
@@ -134,11 +134,11 @@ class Control:
                 file2.write('\t')
             file2.write('\n')
         file2.close()
-        
+
     def coordinateToAngle(self,ox,oy,oz,l1=33,l2=90,l3=110):
-        """ 
-        座標を角度に変換する 
-        ox: 
+        """
+        座標を角度に変換する
+        ox:
         oy:
         oz:
         """
@@ -180,12 +180,12 @@ class Control:
             self.angle[i][0],self.angle[i][1],self.angle[i][2]=self.coordinateToAngle(-self.leg_point[i][2],
                                                                                       self.leg_point[i][0],
                                                                                       self.leg_point[i][1])
-        
+
         for i in range(6):
             self.calibration_angle[i][0]=self.calibration_angle[i][0]-self.angle[i][0]
             self.calibration_angle[i][1]=self.calibration_angle[i][1]-self.angle[i][1]
             self.calibration_angle[i][2]=self.calibration_angle[i][2]-self.angle[i][2]
-    
+
     def setLegAngle(self):
         """
         Angleをもとにサーボを動作させる。
@@ -202,32 +202,32 @@ class Control:
                 self.angle[i+3][0]=self.restriction(self.angle[i+3][0]+self.calibration_angle[i+3][0],0,180)
                 self.angle[i+3][1]=self.restriction(90+self.angle[i+3][1]+self.calibration_angle[i+3][1],0,180)
                 self.angle[i+3][2]=self.restriction(180-(self.angle[i+3][2]+self.calibration_angle[i+3][2]),0,180)
-             
+
             #leg1
             self.servo.setServoAngle(15,self.angle[0][0])
             self.servo.setServoAngle(14,self.angle[0][1])
             self.servo.setServoAngle(13,self.angle[0][2])
-            
+
             #leg2
             self.servo.setServoAngle(12,self.angle[1][0])
             self.servo.setServoAngle(11,self.angle[1][1])
             self.servo.setServoAngle(10,self.angle[1][2])
-            
+
             #leg3
             self.servo.setServoAngle(9,self.angle[2][0])
             self.servo.setServoAngle(8,self.angle[2][1])
             self.servo.setServoAngle(31,self.angle[2][2])
-            
+
             #leg6
             self.servo.setServoAngle(16,self.angle[5][0])
             self.servo.setServoAngle(17,self.angle[5][1])
             self.servo.setServoAngle(18,self.angle[5][2])
-            
+
             #leg5
             self.servo.setServoAngle(19,self.angle[4][0])
             self.servo.setServoAngle(20,self.angle[4][1])
             self.servo.setServoAngle(21,self.angle[4][2])
-            
+
             #leg4
             self.servo.setServoAngle(22,self.angle[3][0])
             self.servo.setServoAngle(23,self.angle[3][1])
@@ -237,7 +237,7 @@ class Control:
 
     def checkPoint(self):
         flag=True
-        leg_lenght=[0,0,0,0,0,0]  
+        leg_lenght=[0,0,0,0,0,0]
         for i in range(6):
           leg_lenght[i]=math.sqrt(self.leg_point[i][0]**2+self.leg_point[i][1]**2+self.leg_point[i][2]**2)
         for i in range(6):
@@ -254,7 +254,7 @@ class Control:
                 self.timeout=time.time()
                 self.relax(True)
                 self.flag=0x00
-                
+
             if COMMAND.CMD_POSITION in self.order and len(self.order)==4:
                 if self.flag!=0x01:
                     self.relax(False)
@@ -263,7 +263,7 @@ class Control:
                 z=self.restriction(int(self.order[3]),-20,20)
                 self.posittion(x,y,z)
                 self.flag=0x01
-                self.order=['','','','','',''] 
+                self.order=['','','','','','']
             elif COMMAND.CMD_ATTITUDE in self.order and len(self.order)==4:
                 """ [CMD実行]: 状態 """
                 if self.flag!=0x02:
@@ -275,12 +275,12 @@ class Control:
                 self.coordinateTransformation(point)
                 self.setLegAngle()
                 self.flag=0x02
-                self.order=['','','','','',''] 
+                self.order=['','','','','','']
             elif COMMAND.CMD_MOVE in self.order and len(self.order)==6:
                 """ [CMD実行]:動作 """
                 if self.order[2] =="0" and self.order[3] =="0":
                     self.run(self.order)
-                    self.order=['','','','','',''] 
+                    self.order=['','','','','','']
                 else:
                     if self.flag!=0x03:
                         self.relax(False)
@@ -289,7 +289,7 @@ class Control:
             elif COMMAND.CMD_BALANCE in self.order and len(self.order)==2:
                 """ [CMD実行]:バランス """
                 if self.order[1] =="1":
-                    self.order=['','','','','',''] 
+                    self.order=['','','','','','']
                     if self.flag!=0x04:
                         self.relax(False)
                     self.flag=0x04
@@ -346,7 +346,7 @@ class Control:
             self.servo.relax()
         else:
             self.setLegAngle()
-        
+
     def coordinateTransformation(self,point):
         #leg1
         self.leg_point[0][0]=point[0][0]*math.cos(54/180*math.pi)+point[0][1]*math.sin(54/180*math.pi)-94
@@ -372,7 +372,7 @@ class Control:
         self.leg_point[5][0]=point[5][0]*math.cos(126/180*math.pi)+point[5][1]*math.sin(126/180*math.pi)-94
         self.leg_point[5][1]=-point[5][0]*math.sin(126/180*math.pi)+point[5][1]*math.cos(126/180*math.pi)
         self.leg_point[5][2]=point[5][2]-14
-    
+
     def restriction(self,var,v_min,v_max):
         if var < v_min:
             return v_min
@@ -383,7 +383,7 @@ class Control:
 
     def map(self,value,fromLow,fromHigh,toLow,toHigh):
         return (toHigh-toLow)*(value-fromLow) / (fromHigh-fromLow) + toLow
-    
+
     def posittion(self,x,y,z):
         point=copy.deepcopy(self.body_point)
         for i in range(6):
@@ -394,7 +394,7 @@ class Control:
             self.body_point[i][2]=point[i][2]
         self.coordinateTransformation(point)
         self.setLegAngle()
-            
+
     def postureBalance(self,r, p, y):
         pos = np.mat([0.0, 0.0, self.height]).T
         rpy = np.array([r, p, y]) * math.pi / 180
@@ -408,32 +408,32 @@ class Control:
         rotz = np.mat([[math.cos(Y), -math.sin(Y), 0],
                        [math.sin(Y), math.cos(Y), 0],
                        [0, 0, 1]])
-                       
+
         rot_mat = rotx * roty * rotz
-        
+
         body_struc = np.mat([[55, 76, 0],
                              [85, 0, 0],
                              [55, -76, 0],
                              [-55, -76, 0],
                              [-85, 0, 0],
                              [-55, 76, 0]]).T
-                         
+
         footpoint_struc = np.mat([[137.1 ,189.4 ,   0],
                                   [225, 0,   0],
                                   [137.1 ,-189.4 ,   0],
                                   [-137.1 ,-189.4 ,   0],
                                   [-225, 0,   0],
                                   [-137.1 ,189.4 ,   0]]).T
-                                  
+
         AB = np.mat(np.zeros((3, 6)))
         ab=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
         for i in range(6):
-            AB[:, i] = pos +rot_mat * footpoint_struc[:, i] 
+            AB[:, i] = pos +rot_mat * footpoint_struc[:, i]
             ab[i][0]=AB[0,i]
             ab[i][1]=AB[1,i]
             ab[i][2]=AB[2,i]
-        return (ab)  
-         
+        return (ab)
+
     def imu6050(self):
         old_r=0
         old_p=0
@@ -458,31 +458,40 @@ class Control:
             self.setLegAngle()
 
     def move_run(
-        self, 
-        cmd, 
+        self,
+        cmd,
         gait, # 歩行種別：0つうじょう 1:ひとつずつ
         x_coord,
         y_coord,
         speed,
         angle
     ):
+        speed = "10"
+        print(
+                str(cmd),
+                str(gait),
+                str(int(x_coord)),
+                str(int(y_coord)),
+                str(int(speed)),
+                str(int(angle))
+        )
         self.run(
             data=[
                 str(cmd),
                 str(gait),
-                str(x_coord),
-                str(y_coord),
-                str(speed),
-                str(angle)
+                str(int(x_coord)),
+                str(int(y_coord)),
+                str(int(speed)),
+                str(int(angle))
             ]
         )
-    
+
     def face_init(self):
         self.servo.setServoAngle(1, int(self.init_face_y))
         self.servo.setServoAngle(0, int(self.init_face_x))
         self.now_face_x = self.init_face_x
         self.now_face_y = self.init_face_y
-    
+
     def face_move(self, x_ratio, y_ratio, speed=100):
         """
         """
@@ -503,7 +512,7 @@ class Control:
                     self.servo.setServoAngle(1, int(i))
                     time.sleep(s)
                 self.is_face_moving = False
-    
+
     def run(self,data,Z=40,F=64):
         """
         動作の実行
@@ -524,7 +533,7 @@ class Control:
         delay=0.01
         point=copy.deepcopy(self.body_point)
         #if y < 0:
-        #   angle=-angle 
+        #   angle=-angle
         if angle!=0:
             x=0
         xy=[[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]]
@@ -556,7 +565,7 @@ class Control:
                     elif j< (5*F/8):
                         point[2*i][0]=point[2*i][0]+8*xy[2*i][0]
                         point[2*i][1]=point[2*i][1]+8*xy[2*i][1]
-                    
+
                         point[2*i+1][0]=point[2*i+1][0]-4*xy[2*i+1][0]
                         point[2*i+1][1]=point[2*i+1][1]-4*xy[2*i+1][1]
                     elif j< (3*F/4):
@@ -575,7 +584,7 @@ class Control:
                 self.coordinateTransformation(point)
                 self.setLegAngle()
                 time.sleep(delay)
-                
+
         elif gait=="2":
             aa=0
             number=[5,2,1,0,3,4]
@@ -595,9 +604,9 @@ class Control:
                             point[k][1]-=2*xy[k][1]
                     self.coordinateTransformation(point)
                     self.setLegAngle()
-                    time.sleep(delay) 
+                    time.sleep(delay)
                     aa+=1
-                  
-                             
+
+
 if __name__=='__main__':
     pass
