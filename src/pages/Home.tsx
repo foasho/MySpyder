@@ -137,6 +137,8 @@ export const HomeComponent: React.FC = () => {
 
     }, [state]);
 
+    const sleep = msec => new Promise(resolve => setTimeout(resolve, msec));
+
     /**
      * メッセージ送信
      */
@@ -149,7 +151,7 @@ export const HomeComponent: React.FC = () => {
      * 左スティック動作時
      * @param event
      */
-    const leftStickMove = (event) => {
+    const leftStickMove = async (event) => {
         const val = convertMoveValue(event);
         const data = {
             actions: [ESendActions.moveBodyOrder],
@@ -159,6 +161,7 @@ export const HomeComponent: React.FC = () => {
         };
         if (state.isWorking) return;
         sendWSData(data);
+        await sleep(2000);
     }
 
     /**
@@ -283,7 +286,7 @@ export const HomeComponent: React.FC = () => {
                                         <Row style={{textAlign: "center"}}>
                                             <span>
                                                 <Button
-                                                    animator={{ activate: state.isStart }}
+                                                    // animator={{ activate: state.isStart }}
                                                     onClick={() => {
                                                         setState({...state, isMessageInput: false, messageText: "" })
                                                     }}
@@ -293,7 +296,7 @@ export const HomeComponent: React.FC = () => {
                                             </span>
                                             <span>
                                                 <Button
-                                                    animator={{ activate: state.isStart }}
+                                                    // animator={{ activate: state.isStart }}
                                                     onClick={() => {
                                                         sendMessage()
                                                     }}
