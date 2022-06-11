@@ -120,3 +120,5 @@ while True:
 #     except KeyboardInterrupt:
 #         print("Quit")
 #         break
+
+# Neural Compute Stick 2のテスト
